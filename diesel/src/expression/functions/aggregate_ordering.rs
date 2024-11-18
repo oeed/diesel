@@ -39,7 +39,7 @@ define_sql_function! {
     fn min<ST: SqlOrdAggregate>(expr: ST) -> ST::Ret;
 }
 
-mod private {
+pub mod private {
     use crate::sql_types::{IntoNullable, SingleValue, SqlOrd, SqlType};
     pub trait SqlOrdAggregate: SingleValue {
         type Ret: SqlType + SingleValue;
