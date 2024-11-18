@@ -432,7 +432,7 @@ pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool
 
         #[doc(hidden)]
         #[allow(non_camel_case_types, non_snake_case, unused_imports)]
-        pub(crate) mod #internals_module_name {
+        pub mod #internals_module_name {
             #tokens
         }
     }
