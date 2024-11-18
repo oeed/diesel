@@ -25,7 +25,7 @@ pub mod array_comparison;
 pub(crate) mod assume_not_null;
 pub(crate) mod bound;
 mod coerce;
-pub(crate) mod count;
+pub mod count;
 #[cfg(not(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))]
 pub(crate) mod exists;
 #[cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes")]
