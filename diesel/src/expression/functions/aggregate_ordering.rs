@@ -37,9 +37,10 @@ extern "SQL" {
     #[aggregate]
     fn min<ST: SqlOrdAggregate>(expr: ST) -> ST::Ret;
 }
-
+/// TODO: avoid needing this public: should be possible once windowing functions are available
 pub mod private {
     use crate::sql_types::{IntoNullable, SingleValue, SqlOrd, SqlType};
+    /// TODO: avoid needing this public: should be possible once windowing functions are available
     pub trait SqlOrdAggregate: SingleValue {
         type Ret: SqlType + SingleValue;
     }

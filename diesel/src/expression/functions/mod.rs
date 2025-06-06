@@ -97,7 +97,9 @@ macro_rules! no_arg_sql_function {
     };
 }
 
+/// TODO: avoid needing this public: should be possible once windowing functions are available
 pub mod aggregate_folding;
+/// TODO: avoid needing this public: should be possible once windowing functions are available
 pub mod aggregate_ordering;
 pub(crate) mod date_and_time;
 pub(crate) mod helper_types;
