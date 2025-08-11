@@ -3,7 +3,6 @@ use super::information_schema::DefaultSchema;
 use super::TableName;
 use crate::print_schema::ColumnSorting;
 use diesel::connection::DefaultLoadingMode;
-use diesel::deserialize::{self, FromStaticSqlRow};
 use diesel::dsl::AsExprOf;
 use diesel::expression::AsExpression;
 use diesel::pg::Pg;
@@ -90,8 +89,21 @@ pub fn get_table_data(
     conn: &mut PgConnection,
     table: &TableName,
     column_sorting: &ColumnSorting,
+    domains_as_custom_types: &[&regex::Regex],
 ) -> QueryResult<Vec<ColumnInformation>> {
     use self::information_schema::columns::dsl::*;
+
+    #[derive(Queryable)]
+    struct Row {
+        column_name: String,
+        type_name: String,
+        type_schema: Option<String>,
+        domain_name: Option<String>,
+        domain_schema: Option<String>,
+        nullable: String,
+        max_length: Option<i32>,
+        comment: Option<String>,
+    }
 
     let schema_name = match table.schema {
         Some(ref name) => Cow::Borrowed(name),
@@ -103,54 +115,54 @@ pub fn get_table_data(
             column_name,
             udt_name,
             udt_schema.nullable(),
+            domain_name,
+            domain_schema.nullable(),
             __is_nullable,
             character_maximum_length,
             col_description(regclass(table), ordinal_position),
         ))
         .filter(table_name.eq(&table.sql_name))
         .filter(table_schema.eq(schema_name));
-    match column_sorting {
+
+    let rows: Vec<Row> = match column_sorting {
         ColumnSorting::OrdinalPosition => query.order(ordinal_position).load(conn),
         ColumnSorting::Name => query.order(column_name).load(conn),
-    }
-}
+    }?;
 
-impl<ST> Queryable<ST, Pg> for ColumnInformation
-where
-    (
-        String,
-        String,
-        Option<String>,
-        String,
-        Option<i32>,
-        Option<String>,
-    ): FromStaticSqlRow<ST, Pg>,
-{
-    type Row = (
-        String,
-        String,
-        Option<String>,
-        String,
-        Option<i32>,
-        Option<String>,
-    );
+    rows.into_iter()
+        .map(|row| {
+            let (type_name, type_schema) = row
+                .domain_name
+                .filter(|name| {
+                    domains_as_custom_types
+                        .iter()
+                        .any(|regex| regex.is_match(name))
+                })
+                .map(|name| (name, row.domain_schema))
+                .unwrap_or((row.type_name, row.type_schema));
 
-    fn build(row: Self::Row) -> deserialize::Result<Self> {
-        Ok(ColumnInformation::new(
-            row.0,
-            row.1,
-            row.2,
-            row.3 == "YES",
-            row.4
+            let max_length = row
+                .max_length
                 .map(|n| {
-                    std::convert::TryInto::try_into(n).map_err(|e| {
-                        format!("Max column length can't be converted to u64: {e} (got: {n})")
+                    n.try_into().map_err(|e| {
+                        diesel::result::Error::DeserializationError(
+                            format!("Max column length can't be converted to u64: {e} (got: {n})")
+                                .into(),
+                        )
                     })
                 })
-                .transpose()?,
-            row.5,
-        ))
-    }
+                .transpose()?;
+
+            Ok(ColumnInformation::new(
+                row.column_name,
+                type_name,
+                type_schema,
+                row.nullable == "YES",
+                max_length,
+                row.comment,
+            ))
+        })
+        .collect()
 }
 
 pub fn get_table_comment(
@@ -174,6 +186,8 @@ mod information_schema {
             ordinal_position -> BigInt,
             udt_name -> VarChar,
             udt_schema -> VarChar,
+            domain_name -> Nullable<VarChar>,
+            domain_schema -> Nullable<VarChar>,
         }
     }
 }
@@ -290,11 +304,21 @@ mod test {
             ColumnInformation::new("array_col", "_varchar", pg_catalog, false, None, None);
         assert_eq!(
             Ok(vec![id, text_col, not_null]),
-            get_table_data(&mut connection, &table_1, &ColumnSorting::OrdinalPosition)
+            get_table_data(
+                &mut connection,
+                &table_1,
+                &ColumnSorting::OrdinalPosition,
+                &[]
+            )
         );
         assert_eq!(
             Ok(vec![array_col]),
-            get_table_data(&mut connection, &table_2, &ColumnSorting::OrdinalPosition)
+            get_table_data(
+                &mut connection,
+                &table_2,
+                &ColumnSorting::OrdinalPosition,
+                &[]
+            )
         );
     }
 
@@ -414,6 +438,72 @@ mod test {
         assert_eq!(
             Ok(vec![fk_one, fk_two]),
             load_foreign_key_constraints(&mut connection, Some("test_schema"))
+        );
+    }
+
+    #[test]
+    fn get_table_data_considers_domain_types() {
+        let mut connection = connection();
+
+        diesel::sql_query("CREATE SCHEMA test_schema")
+            .execute(&mut connection)
+            .unwrap();
+
+        diesel::sql_query("CREATE DOMAIN posinteger AS integer CHECK (VALUE > 0)")
+            .execute(&mut connection)
+            .unwrap();
+
+        diesel::sql_query("CREATE TABLE test_schema.table_1 (id posinteger PRIMARY KEY)")
+            .execute(&mut connection)
+            .unwrap();
+
+        let table_1 = TableName::new("table_1", "test_schema");
+
+        let id_int = ColumnInformation::new(
+            "id",
+            "int4",
+            Some(String::from("pg_catalog")),
+            false,
+            None,
+            None,
+        );
+        let id_domain = ColumnInformation::new(
+            "id",
+            "posinteger",
+            Some(String::from("public")),
+            false,
+            None,
+            None,
+        );
+
+        assert_eq!(
+            Ok(vec![id_int.clone()]),
+            get_table_data(
+                &mut connection,
+                &table_1,
+                &ColumnSorting::OrdinalPosition,
+                &[]
+            )
+        );
+
+        assert_eq!(
+            Ok(vec![id_int.clone()]),
+            get_table_data(
+                &mut connection,
+                &table_1,
+                &ColumnSorting::OrdinalPosition,
+                &[&"non-matching-regex".try_into().unwrap()]
+            )
+        );
+
+        assert_eq!(
+            Ok(vec![id_domain]),
+            get_table_data(
+                &mut connection,
+                &table_1,
+                &ColumnSorting::OrdinalPosition,
+                &[&"int".try_into().unwrap()]
+            )
         );
     }
 }

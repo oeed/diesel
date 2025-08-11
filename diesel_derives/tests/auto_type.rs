@@ -397,7 +397,6 @@ fn test_aggregate_functions() -> _ {
     users::table.select((
         avg(users::id),
         count(users::id),
-        count_distinct(users::id),
         count_star(),
         max(users::id),
         min(users::id),
@@ -526,6 +525,47 @@ fn sqlite_functions() -> _ {
         json_valid(sqlite_extras::json),
         json_type(sqlite_extras::json),
         json_type_with_path(sqlite_extras::json, sqlite_extras::text),
+        json_quote(sqlite_extras::json),
+    )
+}
+
+#[cfg(feature = "sqlite")]
+#[auto_type]
+fn sqlite_aggregate_functions() -> _ {
+    (
+        json_group_array(users::name),
+        json_group_array(users::id),
+        jsonb_group_array(users::name),
+        jsonb_group_array(users::id),
+        json_group_object(users::name, users::id),
+        jsonb_group_object(users::name, users::id),
+    )
+}
+
+#[cfg(feature = "sqlite")]
+#[auto_type]
+fn sqlite_variadic_functions() -> _ {
+    (
+        json_array_0(),
+        json_array_1(sqlite_extras::text),
+        json_array_2(sqlite_extras::id, sqlite_extras::json),
+        jsonb_array_0(),
+        jsonb_array_1(sqlite_extras::text),
+        jsonb_array_2(sqlite_extras::id, sqlite_extras::json),
+        json_remove_0(sqlite_extras::json),
+        json_remove_1(sqlite_extras::jsonb, sqlite_extras::text),
+        json_remove_2(
+            sqlite_extras::json,
+            sqlite_extras::text,
+            sqlite_extras::text,
+        ),
+        jsonb_remove_0(sqlite_extras::jsonb),
+        jsonb_remove_1(sqlite_extras::json, sqlite_extras::text),
+        jsonb_remove_2(
+            sqlite_extras::jsonb,
+            sqlite_extras::text,
+            sqlite_extras::text,
+        ),
     )
 }
 
@@ -573,6 +613,11 @@ fn count_query() -> _ {
     users::table.count()
 }
 
+#[auto_type]
+fn test_cast() -> _ {
+    users::id.cast::<sql_types::Text>()
+}
+
 // #[auto_type]
 // fn test_sql_fragment() -> _ {
 //     sql("foo")
@@ -587,3 +632,62 @@ fn count_query() -> _ {
 // fn test_sql_query_2() -> _ {
 //     sql_query("bar").bind::<Integer, _>(1)
 // }
+
+#[auto_type]
+fn window_function() -> _ {
+    (
+        count(users::id).over(),
+        count(users::id).partition_by(users::name),
+        count(users::id).window_filter(users::name.eq(users::name)),
+        count(users::id).window_order(users::name.desc()),
+        count(users::id).over().partition_by(users::name),
+        count(users::id).frame_by(frame::Rows.frame_start_with(2_u64.preceding())),
+        count(users::id).frame_by(frame::Rows.frame_start_with(frame::UnboundedPreceding)),
+        count(users::id).frame_by(
+            frame::Rows.frame_between(frame::UnboundedPreceding, frame::UnboundedFollowing),
+        ),
+        count(users::id).window_order(users::name).frame_by(
+            frame::Groups.frame_start_with_exclusion(frame::CurrentRow, frame::ExcludeGroup),
+        ),
+        count(users::id).frame_by(frame::Range.frame_between_with_exclusion(
+            frame::CurrentRow,
+            7_u64.following(),
+            frame::ExcludeNoOthers,
+        )),
+        count(users::id)
+            .partition_by(users::name)
+            .window_order(users::name.desc())
+            .window_filter(users::name.eq(users::name)),
+    )
+}
+
+#[auto_type]
+fn aggregate_function_expressions() -> _ {
+    (
+        count(users::id).aggregate_distinct(),
+        count(users::id).aggregate_all(),
+        count(users::id).aggregate_filter(users::name.eq(users::name)),
+        count(users::id).aggregate_order(users::id.desc()),
+    )
+}
+
+#[auto_type]
+fn window_functions2() -> _ {
+    (
+        row_number().over(),
+        rank().over(),
+        dense_rank().over(),
+        percent_rank().over(),
+        cume_dist().over(),
+        ntile(users::id).over(),
+        lag(users::id).over(),
+        lag_with_offset(users::id, users::id).over(),
+        lag_with_offset_and_default(users::id, users::id, users::id).over(),
+        lead(users::id).over(),
+        lead_with_offset(users::id, users::id).over(),
+        lead_with_offset_and_default(users::id, users::id, users::id).over(),
+        first_value(users::id).over(),
+        last_value(users::id).over(),
+        nth_value(users::id, 1_i32).over(),
+    )
+}

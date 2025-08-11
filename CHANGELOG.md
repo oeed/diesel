@@ -2,7 +2,9 @@
 
 All user visible changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/), as described
-for Rust libraries in [RFC #1105](https://github.com/rust-lang/rfcs/blob/master/text/1105-api-evolution.md)
+for Rust libraries in [RFC #1105](https://github.com/rust-lang/rfcs/blob/master/text/1105-api-evolution.md). 
+We explicitly reserve the right to perform breaking changes in minor releases to fix build breaking changes 
+from the Rust project. 
 For any named minimal supported Rust version we guarantee that it is possible to build Diesel with the
 default features enabled using some set of dependencies. Those set of dependencies is not necessarily
 an up to date version of the specific dependency. We check this by using the unstable `-Z minimal-version` cargo flag.
@@ -16,7 +18,7 @@ Increasing the minimal supported Rust version will always be coupled at least wi
 * Fixed `#[derive(Identifiable)]` ignoring attribute `#[diesel(serialize_as)]` on primary keys
 * Added embedded struct support for `AsChangeset` via `#[diesel(embed)]`
 * Added a `#[diesel(skip_update)]` attribute for the `AsChangeset` derive to skip updating a field present in the struct
-* Support for libsqlite3-sys 0.31.0
+* Support for libsqlite3-sys 0.35.0
 * Add support for built-in PostgreSQL range operators and functions
 * Support for postgres multirange type
 * Added `diesel::r2d2::TestCustomizer`, which allows users to customize their `diesel::r2d2::Pool`s
@@ -27,18 +29,25 @@ in a way that makes the pools suitable for use in parallel tests.
 * Added a `#[diesel::declare_sql_function]` attribute macro to easily define support for 
   multiple sql functions at once via an `extern "SQL"` block
 * Support `[print_schema] allow_tables_to_appear_in_same_query_config = "fk_related_tables"` to generate separate `allow_tables_to_appear_in_same_query!` calls containing only tables that are related through foreign keys. (Default: `"all_tables"`.) It is not possible to build queries using two tables that don't appear in the same `allow_tables_to_appear_in_same_query!` call, but that macro generates O(n²) rust code, so this option may be useful to reduce compilation time. ([#4333](https://github.com/diesel-rs/diesel/issues/4333))
+* Added `wasm32-unknown-unknown` target support for sqlite backend.
+* Add support for the `CAST` operator
+* Support `[print_schema] allow_tables_to_appear_in_same_query_config = "none"` to generate no `allow_tables_to_appear_in_same_query!` calls. (Default: `"all_tables"`.). ([#4333](https://github.com/diesel-rs/diesel/issues/4333))
+* Add `[print_schema] pg_domains_as_custom_types` parameter to generate custom types for [PostgreSQL domains](https://www.postgresql.org/docs/current/domains.html) that matches any of the regexes in the given list. (Default: `[]`.) This option allows an application to selectively give special meaning for the serialization/deserialization of these types, avoiding the default behavior of treating the domain as the underlying type. ([#4592](https://github.com/diesel-rs/diesel/discussions/4592))
+* Add support for batch insert and upsert statements with returning for SQLite
+* Add support for window functions and aggregate expressions. 
 
 ### Fixed 
 
 * Fixed diesel thinking `a.eq_any(b)` was non-nullable even if `a` and `b` were nullable.
 * Generate `InstrumentationEvent::BeginTransaction` for immediate and exclusive transactions in SQLite
-* Added `wasm32-unknown-unknown` target support for sqlite backend.
-
-### Fixed
-
 * Use a single space instead of two spaces between `DELETE FROM`.
 * Diesel CLI now ensures that migration versions are always unique. If it fails to generate a unique version, it will return an error. The new version format remains compatible with older Diesel versions.
 * Updated `ipnetwork` to allow version 0.21.
+
+### Changed
+
+* Use distinct `DIESEL_LOG` logging filter env variable instead of the default `RUST_LOG` one (#4575)
+* The minimal supported Rust version is now 1.84.0
 
 ## [2.2.2] 2024-07-19
 

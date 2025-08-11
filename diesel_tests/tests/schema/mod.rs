@@ -61,12 +61,23 @@ impl UserName {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Clone, Queryable, Identifiable, Associations, Selectable)]
+#[derive(
+    PartialEq,
+    Eq,
+    Debug,
+    Clone,
+    Queryable,
+    AsChangeset,
+    Insertable,
+    Identifiable,
+    Associations,
+    Selectable,
+)]
 #[diesel(belongs_to(Post), table_name = comments)]
 pub struct Comment {
-    id: i32,
-    post_id: i32,
-    text: String,
+    pub id: i32,
+    pub post_id: i32,
+    pub text: String,
 }
 
 impl Comment {
@@ -198,12 +209,14 @@ pub type TestConnection = MysqlConnection;
 pub type TestBackend = <TestConnection as Connection>::Backend;
 
 //Used to ensure cleanup of one-off tables, e.g. for a table created for a single test
+#[cfg(not(feature = "mysql"))]
 pub struct DropTable<'a> {
     pub connection: &'a mut TestConnection,
     pub table_name: &'static str,
     pub can_drop: bool,
 }
 
+#[cfg(not(feature = "mysql"))]
 impl Drop for DropTable<'_> {
     fn drop(&mut self) {
         if self.can_drop {

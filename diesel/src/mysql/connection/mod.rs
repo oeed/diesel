@@ -23,8 +23,8 @@ use crate::RunQueryDsl;
 /// `mysql://[user[:password]@]host/database_name[?unix_socket=socket-path&ssl_mode=SSL_MODE*&ssl_ca=/etc/ssl/certs/ca-certificates.crt&ssl_cert=/etc/ssl/certs/client-cert.crt&ssl_key=/etc/ssl/certs/client-key.crt]`
 ///
 ///* `host` can be an IP address or a hostname. If it is set to `localhost`, a connection
-///   will be attempted through the socket at `/tmp/mysql.sock`. If you want to connect to
-///   a local server via TCP (e.g. docker containers), use `0.0.0.0` or `127.0.0.1` instead.
+///  will be attempted through the socket at `/tmp/mysql.sock`. If you want to connect to
+///  a local server via TCP (e.g. docker containers), use `0.0.0.0` or `127.0.0.1` instead.
 /// * `unix_socket` expects the path to the unix socket
 /// * `ssl_ca` accepts a path to the system's certificate roots
 /// * `ssl_cert` accepts a path to the client's certificate file
@@ -56,7 +56,8 @@ use crate::RunQueryDsl;
 /// #     use schema::users;
 /// #     let connection = &mut establish_connection();
 /// use diesel::connection::DefaultLoadingMode;
-/// { // scope to restrict the lifetime of the iterator
+/// {
+///     // scope to restrict the lifetime of the iterator
 ///     let iter1 = users::table.load_iter::<(i32, String), DefaultLoadingMode>(connection)?;
 ///
 ///     for r in iter1 {
@@ -218,15 +219,30 @@ fn update_transaction_manager_status<T>(
     instrumentation: &mut DynInstrumentation,
     query: &dyn DebugQuery,
 ) -> QueryResult<T> {
-    if let Err(Error::DatabaseError(DatabaseErrorKind::SerializationFailure, _)) = query_result {
-        transaction_manager
-            .status
-            .set_requires_rollback_maybe_up_to_top_level(true)
+    fn non_generic_inner(
+        query_result: Result<(), &Error>,
+        transaction_manager: &mut AnsiTransactionManager,
+        instrumentation: &mut DynInstrumentation,
+        query: &dyn DebugQuery,
+    ) {
+        if let Err(Error::DatabaseError(DatabaseErrorKind::SerializationFailure, _)) = query_result
+        {
+            transaction_manager
+                .status
+                .set_requires_rollback_maybe_up_to_top_level(true)
+        }
+        instrumentation.on_connection_event(InstrumentationEvent::FinishQuery {
+            query,
+            error: query_result.err(),
+        });
     }
-    instrumentation.on_connection_event(InstrumentationEvent::FinishQuery {
+
+    non_generic_inner(
+        query_result.as_ref().map(|_| ()),
+        transaction_manager,
+        instrumentation,
         query,
-        error: query_result.as_ref().err(),
-    });
+    );
     query_result
 }
 

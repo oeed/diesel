@@ -35,8 +35,7 @@ impl Backend {
                 #[cfg(not(feature = "postgres"))]
                 {
                     panic!(
-                        "Database url `{}` requires the `postgres` feature but it's not enabled.",
-                        database_url
+                        "Database url `{database_url}` requires the `postgres` feature but it's not enabled."
                     );
                 }
             }
@@ -49,8 +48,7 @@ impl Backend {
                 #[cfg(not(feature = "mysql"))]
                 {
                     panic!(
-                        "Database url `{}` requires the `mysql` feature but it's not enabled.",
-                        database_url
+                        "Database url `{database_url}` requires the `mysql` feature but it's not enabled."
                     );
                 }
             }
@@ -60,8 +58,7 @@ impl Backend {
             _ => {
                 if database_url.starts_with("sqlite://") {
                     panic!(
-                        "Database url `{}` requires the `sqlite` feature but it's not enabled.",
-                        database_url
+                        "Database url `{database_url}` requires the `sqlite` feature but it's not enabled."
                     );
                 }
 
@@ -278,7 +275,7 @@ fn create_schema_table_and_run_migrations_if_needed(
 ) -> Result<(), crate::errors::Error> {
     if !schema_table_exists(database_url)? {
         let migrations = FileBasedMigrations::from_path(migrations_dir)
-            .map_err(|e| crate::errors::Error::MigrationError(Box::new(e)))?;
+            .map_err(|e| crate::errors::Error::from_migration_error(e, Some(migrations_dir)))?;
         let mut conn = InferConnection::from_url(database_url.to_owned())?;
         super::run_migrations_with_output(&mut conn, migrations)
             .map_err(crate::errors::Error::MigrationError)?;
@@ -442,7 +439,7 @@ fn get_database_and_url(database_url: &str) -> Result<(String, url::Url), crate:
     let database = base
         .path_segments()
         .expect("The database url has at least one path segment")
-        .last()
+        .next_back()
         .expect("The database url has at least one path segment")
         .to_owned();
     Ok((database, base))

@@ -2,7 +2,7 @@
 
 pub(in crate::sqlite) use self::private::{
     BinaryOrNullableBinary, JsonOrNullableJson, JsonOrNullableJsonOrJsonbOrNullableJsonb,
-    MaybeNullableValue, TextOrNullableText, TextOrNullableTextOrBinaryOrNullableBinary,
+    MaybeNullableValue, NotBlob, TextOrNullableText, TextOrNullableTextOrBinaryOrNullableBinary,
 };
 use super::operators::*;
 use crate::dsl;
@@ -88,7 +88,11 @@ pub trait SqliteExpressionMethods: Expression + Sized {
 impl<T: Expression> SqliteExpressionMethods for T {}
 
 pub(in crate::sqlite) mod private {
-    use crate::sql_types::{Binary, Json, Jsonb, MaybeNullableType, Nullable, SingleValue, Text};
+    use crate::sql_types::{
+        BigInt, Binary, Bool, Date, Double, Float, Integer, Json, Jsonb, MaybeNullableType,
+        Nullable, Numeric, SingleValue, SmallInt, SqlType, Text, Time, Timestamp,
+        TimestamptzSqlite,
+    };
 
     #[diagnostic::on_unimplemented(
         message = "`{Self}` is neither `diesel::sql_types::Text` nor `diesel::sql_types::Nullable<Text>`",
@@ -149,4 +153,28 @@ pub(in crate::sqlite) mod private {
     {
         type Out = <T::IsNull as MaybeNullableType<O>>::Out;
     }
+
+    #[diagnostic::on_unimplemented(
+        message = "`{Self}` is neither any of `diesel::sql_types::{{
+            Text, Float, Double, Numeric,  Bool, Integer, SmallInt, BigInt, 
+            Date, Time, Timestamp, TimestamptzSqlite, Json
+         }}`  nor `diesel::sql_types::Nullable<Any of the above>`",
+        note = "try to provide an expression that produces one of the expected sql types"
+    )]
+    pub trait NotBlob: SqlType + SingleValue {}
+
+    impl<T> NotBlob for Nullable<T> where T: NotBlob {}
+    impl NotBlob for Text {}
+    impl NotBlob for Float {}
+    impl NotBlob for Double {}
+    impl NotBlob for Numeric {}
+    impl NotBlob for Bool {}
+    impl NotBlob for Integer {}
+    impl NotBlob for SmallInt {}
+    impl NotBlob for BigInt {}
+    impl NotBlob for Date {}
+    impl NotBlob for Time {}
+    impl NotBlob for Timestamp {}
+    impl NotBlob for TimestamptzSqlite {}
+    impl NotBlob for Json {}
 }

@@ -2,7 +2,7 @@
 extern crate libsqlite3_sys as ffi;
 
 #[cfg(all(target_family = "wasm", target_os = "unknown"))]
-use sqlite_wasm_rs::export as ffi;
+use sqlite_wasm_rs as ffi;
 
 mod bind_collector;
 mod functions;
@@ -47,7 +47,7 @@ use crate::sqlite::Sqlite;
 ///
 /// * [`DefaultLoadingMode`]
 ///
-/// As `SqliteConnection` only supports a single loading mode implementation
+/// As `SqliteConnection` only supports a single loading mode implementation,
 /// it is **not required** to explicitly specify a loading mode
 /// when calling [`RunQueryDsl::load_iter()`] or [`LoadConnection::load`]
 ///
@@ -69,7 +69,8 @@ use crate::sqlite::Sqlite;
 /// #     use schema::users;
 /// #     let connection = &mut establish_connection();
 /// use diesel::connection::DefaultLoadingMode;
-/// { // scope to restrict the lifetime of the iterator
+/// {
+///     // scope to restrict the lifetime of the iterator
 ///     let iter1 = users::table.load_iter::<(i32, String), DefaultLoadingMode>(connection)?;
 ///
 ///     for r in iter1 {
@@ -116,6 +117,44 @@ use crate::sqlite::Sqlite;
 ///     let (id, name) = r?;
 ///     println!("Id: {} Name: {}", id, name);
 /// }
+/// #   Ok(())
+/// # }
+/// ```
+///
+/// # Concurrency
+///
+/// By default, when running into a database lock, the operation will abort with a
+/// `Database locked` error. However, it's possible to configure it for greater concurrency,
+/// trading latency for not having to deal with retries yourself.
+///
+/// You can use this example as blue-print for which statements to run after establishing a connection.
+/// It is **important** to run each `PRAGMA` in a single statement to make sure all of them apply
+/// correctly. In addition the order of the `PRAGMA` statements is relevant to prevent timeout
+/// issues for the later `PRAGMA` statements.
+///
+/// ```rust
+/// # include!("../../doctest_setup.rs");
+/// #
+/// # fn main() {
+/// #     run_test().unwrap();
+/// # }
+/// #
+/// # fn run_test() -> QueryResult<()> {
+/// #     use schema::users;
+/// use diesel::connection::SimpleConnection;
+/// let conn = &mut establish_connection();
+/// // see https://fractaledmind.github.io/2023/09/07/enhancing-rails-sqlite-fine-tuning/
+/// // sleep if the database is busy, this corresponds to up to 2 seconds sleeping time.
+/// conn.batch_execute("PRAGMA busy_timeout = 2000;")?;
+/// // better write-concurrency
+/// conn.batch_execute("PRAGMA journal_mode = WAL;")?;
+/// // fsync only in critical moments
+/// conn.batch_execute("PRAGMA synchronous = NORMAL;")?;
+/// // write WAL changes back every 1000 pages, for an in average 1MB WAL file.
+/// // May affect readers if number is increased
+/// conn.batch_execute("PRAGMA wal_autocheckpoint = 1000;")?;
+/// // free some space by truncating possibly massive WAL files from the last run
+/// conn.batch_execute("PRAGMA wal_checkpoint(TRUNCATE);")?;
 /// #   Ok(())
 /// # }
 /// ```
@@ -176,7 +215,7 @@ impl Connection for SqliteConnection {
     ///
     /// * The database is stored in memory by default.
     /// * Persistent VFS (Virtual File Systems) is optional,
-    ///     see <https://github.com/Spxg/sqlite-wasm-rs/blob/master/VFS.md> for details
+    ///   see <https://github.com/Spxg/sqlite-wasm-rs/blob/master/sqlite-wasm-rs/src/vfs/README.md> for details
     fn establish(database_url: &str) -> ConnectionResult<Self> {
         let mut instrumentation = DynInstrumentation::default_instrumentation();
         instrumentation.on_connection_event(InstrumentationEvent::StartEstablishConnection {
@@ -976,22 +1015,5 @@ mod tests {
         check_empty_query_error(crate::sql_query("   ").execute(connection));
         check_empty_query_error(crate::sql_query("\n\t").execute(connection));
         check_empty_query_error(crate::sql_query("-- SELECT 1;").execute(connection));
-    }
-
-    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
-    #[wasm_bindgen_test::wasm_bindgen_test]
-    fn test_sqlite_wasm_vfs_default() {
-        SqliteConnection::establish("test_sqlite_wasm_vfs_default.db").unwrap();
-    }
-
-    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
-    #[wasm_bindgen_test::wasm_bindgen_test]
-    async fn test_sqlite_wasm_vfs_opfs_sahpool() {
-        let util = sqlite_wasm_rs::export::install_opfs_sahpool(None, false)
-            .await
-            .unwrap();
-        SqliteConnection::establish("file:test_sqlite_wasm_vfs_opfs_sahpool.db?vfs=opfs-sahpool")
-            .unwrap();
-        assert!(util.get_file_count() > 0);
     }
 }

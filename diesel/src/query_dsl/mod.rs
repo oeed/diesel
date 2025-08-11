@@ -27,7 +27,7 @@ mod combine_dsl;
 mod distinct_dsl;
 #[doc(hidden)]
 pub mod filter_dsl;
-mod group_by_dsl;
+pub(crate) mod group_by_dsl;
 mod having_dsl;
 mod join_dsl;
 #[doc(hidden)]
@@ -166,11 +166,21 @@ pub trait QueryDsl: Sized {
     ///     .distinct_on(species)
     ///     .load(connection);
     ///
-    /// assert_eq!(Ok(vec![Animal::new("dog", Some("Jack"), 4),
-    ///                    Animal::new("dog", None, 4),
-    ///                    Animal::new("spider", None, 8)]), all_animals);
-    /// assert_eq!(Ok(vec![Animal::new("dog", Some("Jack"), 4),
-    ///                    Animal::new("spider", None, 8)]), distinct_animals);
+    /// assert_eq!(
+    ///     Ok(vec![
+    ///         Animal::new("dog", Some("Jack"), 4),
+    ///         Animal::new("dog", None, 4),
+    ///         Animal::new("spider", None, 8)
+    ///     ]),
+    ///     all_animals
+    /// );
+    /// assert_eq!(
+    ///     Ok(vec![
+    ///         Animal::new("dog", Some("Jack"), 4),
+    ///         Animal::new("spider", None, 8)
+    ///     ]),
+    ///     distinct_animals
+    /// );
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
@@ -227,7 +237,10 @@ pub trait QueryDsl: Sized {
     /// #     let connection = &mut establish_connection();
     /// // By default, all columns will be selected
     /// let all_users = users.load::<(i32, String)>(connection)?;
-    /// assert_eq!(vec![(1, String::from("Sean")), (2, String::from("Tess"))], all_users);
+    /// assert_eq!(
+    ///     vec![(1, String::from("Sean")), (2, String::from("Tess"))],
+    ///     all_users
+    /// );
     ///
     /// let all_names = users.select(name).load::<String>(connection)?;
     /// assert_eq!(vec!["Sean", "Tess"], all_names);
@@ -292,14 +305,18 @@ pub trait QueryDsl: Sized {
     /// // type of this query must contain all fields from the original schema in order.
     /// let all_data = join.load::<(User, Option<Post>)>(connection)?;
     /// let expected_data = vec![
-    ///     (User::new(1, "Sean"), Some(Post::new(post_id, 1, "Sean's Post"))),
+    ///     (
+    ///         User::new(1, "Sean"),
+    ///         Some(Post::new(post_id, 1, "Sean's Post")),
+    ///     ),
     ///     (User::new(2, "Tess"), None),
     /// ];
     /// assert_eq!(expected_data, all_data);
     ///
     /// // Since `posts` is on the right side of a left join, `.nullable` is
     /// // needed.
-    /// let names_and_titles = join.select((users::name, posts::title.nullable()))
+    /// let names_and_titles = join
+    ///     .select((users::name, posts::title.nullable()))
     ///     .load::<(String, Option<String>)>(connection)?;
     /// let expected_data = vec![
     ///     (String::from("Sean"), Some(String::from("Sean's Post"))),
@@ -372,7 +389,6 @@ pub trait QueryDsl: Sized {
     ///         posts
     ///         INNER JOIN comments ON comments.post_id = posts.id
     ///     ) ON posts.user_id = users.id
-    ///
     /// ```
     ///
     /// While the second query would deserialize into `(User, Post, Comment)` and
@@ -439,7 +455,6 @@ pub trait QueryDsl: Sized {
     /// # /*
     /// allow_tables_to_appear_in_same_query!(users, posts);
     /// # */
-    ///
     /// # fn main() {
     /// #     use self::users::dsl::{users, name};
     /// #     use self::posts::dsl::{posts, user_id, title};
@@ -473,7 +488,6 @@ pub trait QueryDsl: Sized {
     /// # /*
     /// allow_tables_to_appear_in_same_query!(users, posts);
     /// # */
-    ///
     /// # fn main() {
     /// #     use self::users::dsl::{users, name};
     /// #     use self::posts::dsl::{posts, user_id, title};
@@ -508,12 +522,26 @@ pub trait QueryDsl: Sized {
     ///     .load::<(User, Post)>(connection); // type could be elided
     /// let expected_data = vec![
     ///     (
-    ///         User { id: 1, name: String::from("Sean") },
-    ///         Post { id: 4, user_id: 1, title: String::from("Sean's post") },
+    ///         User {
+    ///             id: 1,
+    ///             name: String::from("Sean"),
+    ///         },
+    ///         Post {
+    ///             id: 4,
+    ///             user_id: 1,
+    ///             title: String::from("Sean's post"),
+    ///         },
     ///     ),
     ///     (
-    ///         User { id: 1, name: String::from("Sean") },
-    ///         Post { id: 5, user_id: 2, title: String::from("Sean is a jerk") },
+    ///         User {
+    ///             id: 1,
+    ///             name: String::from("Sean"),
+    ///         },
+    ///         Post {
+    ///             id: 5,
+    ///             user_id: 2,
+    ///             title: String::from("Sean is a jerk"),
+    ///         },
     ///     ),
     /// ];
     /// assert_eq!(Ok(expected_data), data);
@@ -591,7 +619,8 @@ pub trait QueryDsl: Sized {
     ///
     /// // Since `posts` is on the right side of a left join, `.nullable` is
     /// // needed.
-    /// let names_and_titles = join.select((users::name, posts::title.nullable()))
+    /// let names_and_titles = join
+    ///     .select((users::name, posts::title.nullable()))
     ///     .load::<(String, Option<String>)>(connection)?;
     /// let expected_data = vec![
     ///     (String::from("Sean"), Some(String::from("Sean's Post"))),
@@ -733,11 +762,9 @@ pub trait QueryDsl: Sized {
     /// # fn main() {
     /// #     use schema::users::dsl::*;
     /// #     let connection = &mut establish_connection();
-    /// let seans_id = users.filter(name.eq("Sean")).select(id)
-    ///     .first(connection);
+    /// let seans_id = users.filter(name.eq("Sean")).select(id).first(connection);
     /// assert_eq!(Ok(1), seans_id);
-    /// let tess_id = users.filter(name.eq("Tess")).select(id)
-    ///     .first(connection);
+    /// let tess_id = users.filter(name.eq("Tess")).select(id).first(connection);
     /// assert_eq!(Ok(2), tess_id);
     /// # }
     /// ```
@@ -782,10 +809,7 @@ pub trait QueryDsl: Sized {
     ///     .or_filter(legs.eq(4))
     ///     .select(name)
     ///     .get_results::<Option<String>>(connection)?;
-    /// let expected = vec![
-    ///     Some(String::from("Sinatra")),
-    ///     Some(String::from("Fido")),
-    /// ];
+    /// let expected = vec![Some(String::from("Sinatra")), Some(String::from("Fido"))];
     /// assert_eq!(expected, good_animals);
     /// #     Ok(())
     /// # }
@@ -813,7 +837,10 @@ pub trait QueryDsl: Sized {
     /// let tess = (2, "Tess".to_string());
     /// assert_eq!(Ok(sean), users.find(1).first(connection));
     /// assert_eq!(Ok(tess), users.find(2).first(connection));
-    /// assert_eq!(Err::<(i32, String), _>(NotFound), users.find(3).first(connection));
+    /// assert_eq!(
+    ///     Err::<(i32, String), _>(NotFound),
+    ///     users.find(3).first(connection)
+    /// );
     /// # }
     /// ```
     fn find<PK>(self, id: PK) -> Find<Self, PK>
@@ -850,21 +877,21 @@ pub trait QueryDsl: Sized {
     /// #     let connection = &mut establish_connection();
     /// #     diesel::sql_query("DELETE FROM users").execute(connection)?;
     /// diesel::insert_into(users)
-    ///     .values(&vec![
-    ///         name.eq("Saul"),
-    ///         name.eq("Steve"),
-    ///         name.eq("Stan"),
-    ///     ])
+    ///     .values(&vec![name.eq("Saul"), name.eq("Steve"), name.eq("Stan")])
     ///     .execute(connection)?;
     ///
-    /// let ordered_names = users.select(name)
+    /// let ordered_names = users
+    ///     .select(name)
     ///     .order(name.desc())
     ///     .load::<String>(connection)?;
     /// assert_eq!(vec!["Steve", "Stan", "Saul"], ordered_names);
     ///
-    /// diesel::insert_into(users).values(name.eq("Stan")).execute(connection)?;
+    /// diesel::insert_into(users)
+    ///     .values(name.eq("Stan"))
+    ///     .execute(connection)?;
     ///
-    /// let data = users.select((name, id))
+    /// let data = users
+    ///     .select((name, id))
     ///     .order((name.asc(), id.desc()))
     ///     .load(connection)?;
     /// let expected_data = vec![
@@ -925,7 +952,8 @@ pub trait QueryDsl: Sized {
     ///     ])
     ///     .execute(connection)?;
     ///
-    /// let data = users.select((name, id))
+    /// let data = users
+    ///     .select((name, id))
     ///     .order_by(name.asc())
     ///     .then_order_by(id.desc())
     ///     .load(connection)?;
@@ -973,15 +1001,14 @@ pub trait QueryDsl: Sized {
     /// #        .execute(connection)?;
     /// #
     /// // Using a limit
-    /// let limited = users.select(name)
+    /// let limited = users
+    ///     .select(name)
     ///     .order(id)
     ///     .limit(1)
     ///     .load::<String>(connection)?;
     ///
     /// // Without a limit
-    /// let no_limit = users.select(name)
-    ///     .order(id)
-    ///     .load::<String>(connection)?;
+    /// let no_limit = users.select(name).order(id).load::<String>(connection)?;
     ///
     /// assert_eq!(vec!["Sean"], limited);
     /// assert_eq!(vec!["Sean", "Bastien", "Pascal"], no_limit);
@@ -1022,14 +1049,16 @@ pub trait QueryDsl: Sized {
     /// #        .execute(connection)?;
     /// #
     /// // Using an offset
-    /// let offset = users.select(name)
+    /// let offset = users
+    ///     .select(name)
     ///     .order(id)
     ///     .limit(2)
     ///     .offset(1)
     ///     .load::<String>(connection)?;
     ///
     /// // No Offset
-    /// let no_offset = users.select(name)
+    /// let no_offset = users
+    ///     .select(name)
     ///     .order(id)
     ///     .limit(2)
     ///     .load::<String>(connection)?;
@@ -1080,13 +1109,17 @@ pub trait QueryDsl: Sized {
     /// #     use crate::schema::{users, posts};
     /// #     use diesel::dsl::count;
     /// #     let connection = &mut establish_connection();
-    /// let data = users::table.inner_join(posts::table)
+    /// let data = users::table
+    ///     .inner_join(posts::table)
     ///     .group_by(users::id)
     ///     .select((users::name, count(posts::id)))
     /// #   .order_by(users::id.asc())
     ///     .load::<(String, i64)>(connection)?;
     ///
-    /// assert_eq!(vec![(String::from("Sean"), 2), (String::from("Tess"), 1)], data);
+    /// assert_eq!(
+    ///     vec![(String::from("Sean"), 2), (String::from("Tess"), 1)],
+    ///     data
+    /// );
     /// # Ok(())
     /// # }
     /// ```
@@ -1111,7 +1144,8 @@ pub trait QueryDsl: Sized {
     /// #     use crate::schema::{users, posts};
     /// #     use diesel::dsl::count;
     /// #     let connection = &mut establish_connection();
-    /// let data = users::table.inner_join(posts::table)
+    /// let data = users::table
+    ///     .inner_join(posts::table)
     ///     .group_by(users::id)
     ///     .having(count(posts::id).gt(1))
     ///     .select((users::name, count(posts::id)))
@@ -1388,8 +1422,14 @@ pub trait QueryDsl: Sized {
     ///     users::table.filter(users::name.eq(name)).into_boxed()
     /// }
     ///
-    /// assert_eq!(Ok(1), users_by_name("Sean").select(users::id).first(connection));
-    /// assert_eq!(Ok(2), users_by_name("Tess").select(users::id).first(connection));
+    /// assert_eq!(
+    ///     Ok(1),
+    ///     users_by_name("Sean").select(users::id).first(connection)
+    /// );
+    /// assert_eq!(
+    ///     Ok(2),
+    ///     users_by_name("Tess").select(users::id).first(connection)
+    /// );
     /// # }
     /// ```
     fn into_boxed<'a, DB>(self) -> IntoBoxed<'a, Self, DB>
@@ -1428,10 +1468,13 @@ pub trait QueryDsl: Sized {
     /// insert_into(posts::table)
     ///     .values(posts::user_id.eq(1))
     ///     .execute(connection)?;
-    /// let last_post = posts::table
-    ///     .order(posts::id.desc());
-    /// let most_recently_active_user = users.select(name)
-    ///     .filter(id.nullable().eq(last_post.select(posts::user_id).single_value()))
+    /// let last_post = posts::table.order(posts::id.desc());
+    /// let most_recently_active_user = users
+    ///     .select(name)
+    ///     .filter(
+    ///         id.nullable()
+    ///             .eq(last_post.select(posts::user_id).single_value()),
+    ///     )
     ///     .first::<String>(connection)?;
     /// assert_eq!("Sean", most_recently_active_user);
     /// #     Ok(())
@@ -1487,6 +1530,7 @@ pub trait QueryDsl: Sized {
     }
 }
 
+#[diagnostic::do_not_recommend]
 impl<T: Table> QueryDsl for T {}
 
 /// Methods used to execute queries.
@@ -1577,8 +1621,7 @@ pub trait RunQueryDsl<Conn>: Sized {
     /// #     use diesel::insert_into;
     /// #     use schema::users::dsl::*;
     /// #     let connection = &mut establish_connection();
-    /// let data = users.select(name)
-    ///     .load::<String>(connection)?;
+    /// let data = users.select(name).load::<String>(connection)?;
     /// assert_eq!(vec!["Sean", "Tess"], data);
     /// #     Ok(())
     /// # }
@@ -1597,12 +1640,8 @@ pub trait RunQueryDsl<Conn>: Sized {
     /// #     use diesel::insert_into;
     /// #     use schema::users::dsl::*;
     /// #     let connection = &mut establish_connection();
-    /// let data = users
-    ///     .load::<(i32, String)>(connection)?;
-    /// let expected_data = vec![
-    ///     (1, String::from("Sean")),
-    ///     (2, String::from("Tess")),
-    /// ];
+    /// let data = users.load::<(i32, String)>(connection)?;
+    /// let expected_data = vec![(1, String::from("Sean")), (2, String::from("Tess"))];
     /// assert_eq!(expected_data, data);
     /// #     Ok(())
     /// # }
@@ -1627,11 +1666,16 @@ pub trait RunQueryDsl<Conn>: Sized {
     /// #     use diesel::insert_into;
     /// #     use schema::users::dsl::*;
     /// #     let connection = &mut establish_connection();
-    /// let data = users
-    ///     .load::<User>(connection)?;
+    /// let data = users.load::<User>(connection)?;
     /// let expected_data = vec![
-    ///     User { id: 1, name: String::from("Sean") },
-    ///     User { id: 2, name: String::from("Tess") },
+    ///     User {
+    ///         id: 1,
+    ///         name: String::from("Sean"),
+    ///     },
+    ///     User {
+    ///         id: 2,
+    ///         name: String::from("Tess"),
+    ///     },
     /// ];
     /// assert_eq!(expected_data, data);
     /// #     Ok(())
@@ -1694,7 +1738,8 @@ pub trait RunQueryDsl<Conn>: Sized {
     /// #     let connection = &mut establish_connection();
     /// use diesel::connection::DefaultLoadingMode;
     ///
-    /// let data = users.select(name)
+    /// let data = users
+    ///     .select(name)
     ///     .load_iter::<String, DefaultLoadingMode>(connection)?
     ///     .collect::<QueryResult<Vec<_>>>()?;
     /// assert_eq!(vec!["Sean", "Tess"], data);
@@ -1720,10 +1765,7 @@ pub trait RunQueryDsl<Conn>: Sized {
     /// let data = users
     ///     .load_iter::<(i32, String), DefaultLoadingMode>(connection)?
     ///     .collect::<QueryResult<Vec<_>>>()?;
-    /// let expected_data = vec![
-    ///     (1, String::from("Sean")),
-    ///     (2, String::from("Tess")),
-    /// ];
+    /// let expected_data = vec![(1, String::from("Sean")), (2, String::from("Tess"))];
     /// assert_eq!(expected_data, data);
     /// #     Ok(())
     /// # }
@@ -1754,8 +1796,14 @@ pub trait RunQueryDsl<Conn>: Sized {
     ///     .load_iter::<User, DefaultLoadingMode>(connection)?
     ///     .collect::<QueryResult<Vec<_>>>()?;
     /// let expected_data = vec![
-    ///     User { id: 1, name: String::from("Sean") },
-    ///     User { id: 2, name: String::from("Tess") },
+    ///     User {
+    ///         id: 1,
+    ///         name: String::from("Sean"),
+    ///     },
+    ///     User {
+    ///         id: 2,
+    ///         name: String::from("Tess"),
+    ///     },
     /// ];
     /// assert_eq!(expected_data, data);
     /// #     Ok(())

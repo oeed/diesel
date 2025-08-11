@@ -286,7 +286,7 @@ pub fn build_cli() -> Command {
                 .help("Group tables in allow_tables_to_appear_in_same_query!().")
                 .num_args(1)
                 .action(ArgAction::Append)
-                .value_parser(PossibleValuesParser::new(["fk_related_tables", "all_tables"])),
+                .value_parser(PossibleValuesParser::new(["fk_related_tables", "all_tables", "none"])),
         )
         .arg(
             Arg::new("column-sorting")
@@ -334,6 +334,14 @@ pub fn build_cli() -> Command {
                 .action(clap::ArgAction::Append)
                 .number_of_values(1)
                 .help("A list of derives to implement for every automatically generated SqlType in the schema, separated by commas."),
+        )
+        .arg(
+            Arg::new("pg-domains-as-custom-types")
+                .long("pg-domains-as-custom-types")
+                .num_args(1..)
+                .action(clap::ArgAction::Append)
+                .number_of_values(1)
+                .help("A regex to distinguish domain names to generate custom types for instead of relying on underlying type."),
         )
         .arg(
             Arg::new("schema-key")

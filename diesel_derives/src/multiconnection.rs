@@ -1200,7 +1200,7 @@ fn generate_querybuilder(connection_types: &[ConnectionVariant]) -> TokenStream 
         quote::quote! {
             <S> diesel::query_builder::QueryFragment<super::backend::MultiBackend, super::backend::MultiAliasSyntax>
                 for diesel::query_source::Alias<S>
-        }
+        },
     ])
     .map(|t| generate_queryfragment_impls(t, &query_fragment_bounds));
 
@@ -1432,7 +1432,7 @@ fn generate_querybuilder(connection_types: &[ConnectionVariant]) -> TokenStream 
             fn column_names(
                 &self,
                 mut out: diesel::query_builder::AstPass<'_, '_, super::multi_connection_impl::backend::MultiBackend>
-            ) -> QueryResult<()> {
+            ) -> diesel::QueryResult<()> {
                 use diesel::internal::derives::multiconnection::AstPassHelper;
 
                 match out.backend() {
@@ -1638,6 +1638,11 @@ fn generate_backend(connection_types: &[ConnectionVariant]) -> TokenStream {
         pub struct MultiSelectStatementSyntax;
         pub struct MultiAliasSyntax;
 
+        pub struct MultiWindowFrameClauseGroupSupport;
+        pub struct MultiWindowFrameExclusionSupport;
+        pub struct MultiAggregateFunctionExpressions;
+        pub struct MultiBuiltInWindowFunctionRequireOrder;
+
         impl diesel::backend::SqlDialect for MultiBackend {
             type ReturningClause = MultiReturningClause;
             // no on conflict support is also the default
@@ -1652,6 +1657,10 @@ fn generate_backend(connection_types: &[ConnectionVariant]) -> TokenStream {
             type SelectStatementSyntax = MultiSelectStatementSyntax;
             type AliasSyntax = MultiAliasSyntax;
             type FullJoinSupport = diesel::internal::derives::multiconnection::sql_dialect::full_join_support::NoFullJoinSupport;
+            type WindowFrameClauseGroupSupport = MultiWindowFrameClauseGroupSupport;
+            type WindowFrameExclusionSupport = MultiWindowFrameExclusionSupport;
+            type AggregateFunctionExpressions = MultiAggregateFunctionExpressions;
+            type BuiltInWindowFunctionRequireOrder = MultiBuiltInWindowFunctionRequireOrder;
         }
 
         impl diesel::internal::derives::multiconnection::TrustedBackend for MultiBackend {}

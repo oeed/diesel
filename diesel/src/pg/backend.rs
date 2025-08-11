@@ -101,14 +101,14 @@ impl PgTypeMetadata {
     /// The [OID] of `T`
     ///
     /// [OID]: https://www.postgresql.org/docs/current/static/datatype-oid.html
-    pub fn oid(&self) -> Result<u32, impl std::error::Error + Send + Sync> {
+    pub fn oid(&self) -> Result<u32, impl std::error::Error + Send + Sync + use<>> {
         self.0.as_ref().map(|i| i.oid).map_err(Clone::clone)
     }
 
     /// The [OID] of `T[]`
     ///
     /// [OID]: https://www.postgresql.org/docs/current/static/datatype-oid.html
-    pub fn array_oid(&self) -> Result<u32, impl std::error::Error + Send + Sync> {
+    pub fn array_oid(&self) -> Result<u32, impl std::error::Error + Send + Sync + use<>> {
         self.0.as_ref().map(|i| i.array_oid).map_err(Clone::clone)
     }
 }
@@ -143,6 +143,16 @@ impl SqlDialect for Pg {
     type AliasSyntax = sql_dialect::alias_syntax::AsAliasSyntax;
 
     type FullJoinSupport = sql_dialect::full_join_support::PostgresLikeFullJoinSupport;
+
+    type WindowFrameClauseGroupSupport =
+        sql_dialect::window_frame_clause_group_support::IsoGroupWindowFrameUnit;
+    type WindowFrameExclusionSupport =
+        sql_dialect::window_frame_exclusion_support::FrameExclusionSupport;
+    type AggregateFunctionExpressions =
+        sql_dialect::aggregate_function_expressions::PostgresLikeAggregateFunctionExpressions;
+
+    type BuiltInWindowFunctionRequireOrder =
+        sql_dialect::built_in_window_function_require_order::NoOrderRequired;
 }
 
 impl DieselReserveSpecialization for Pg {}

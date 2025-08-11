@@ -50,6 +50,20 @@ fn run_infer_schema_django_bool_case() {
 }
 
 #[test]
+#[cfg(feature = "postgres")]
+fn run_infer_schema_domain_types_case() {
+    test_print_schema(
+        "print_schema_domain_types",
+        vec![
+            "--pg-domains-as-custom-types",
+            "int",
+            "--pg-domains-as-custom-types",
+            "longtext",
+        ],
+    );
+}
+
+#[test]
 fn run_infer_schema_exclude() {
     test_print_schema(
         "print_schema_except_tables",
@@ -356,6 +370,14 @@ fn print_schema_fk_related_tables() {
             "--allow-tables-to-appear-in-same-query-config",
             "fk_related_tables",
         ],
+    )
+}
+
+#[test]
+fn print_schema_allows_none() {
+    test_print_schema(
+        "print_schema_allows_none",
+        vec!["--allow-tables-to-appear-in-same-query-config", "none"],
     )
 }
 

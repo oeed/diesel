@@ -2,7 +2,7 @@ use crate::dsl;
 use crate::expression::array_comparison::{AsInExpression, In, NotIn};
 use crate::expression::grouped::Grouped;
 use crate::expression::operators::*;
-use crate::expression::{assume_not_null, nullable, AsExpression, Expression};
+use crate::expression::{assume_not_null, cast, nullable, AsExpression, Expression};
 use crate::sql_types::{SingleValue, SqlType};
 
 /// Methods present on all expressions, except tuples
@@ -11,7 +11,6 @@ pub trait ExpressionMethods: Expression + Sized {
     ///
     /// Note that this function follows SQL semantics around `None`/`null` values,
     /// so `eq(None)` will never match. Use [`is_null`](ExpressionMethods::is_null()) instead.
-    ///
     ///
     #[cfg_attr(
         any(feature = "sqlite", feature = "postgres"),
@@ -122,18 +121,27 @@ pub trait ExpressionMethods: Expression + Sized {
     /// #     let connection = &mut establish_connection();
     /// #     diesel::sql_query("INSERT INTO users (name) VALUES
     /// #         ('Jim')").execute(connection).unwrap();
-    /// let data = users::table.select(users::id).filter(users::name.eq_any(vec!["Sean", "Jim"]));
+    /// let data = users::table
+    ///     .select(users::id)
+    ///     .filter(users::name.eq_any(vec!["Sean", "Jim"]));
     /// assert_eq!(Ok(vec![1, 3]), data.load(connection));
     ///
     /// // Calling `eq_any` with an empty array is the same as doing `WHERE 1=0`
-    /// let data = users::table.select(users::id).filter(users::name.eq_any(Vec::<String>::new()));
+    /// let data = users::table
+    ///     .select(users::id)
+    ///     .filter(users::name.eq_any(Vec::<String>::new()));
     /// assert_eq!(Ok(vec![]), data.load::<i32>(connection));
     ///
     /// // Calling `eq_any` with a subquery is the same as using
     /// // `WHERE {column} IN {subquery}`.
     ///
-    /// let subquery = users::table.filter(users::name.eq("Sean")).select(users::id).into_boxed();
-    /// let data = posts::table.select(posts::id).filter(posts::user_id.eq_any(subquery));
+    /// let subquery = users::table
+    ///     .filter(users::name.eq("Sean"))
+    ///     .select(users::id)
+    ///     .into_boxed();
+    /// let data = posts::table
+    ///     .select(posts::id)
+    ///     .filter(posts::user_id.eq_any(subquery));
     /// assert_eq!(Ok(vec![1, 2]), data.load::<i32>(connection));
     ///
     /// # }
@@ -442,6 +450,81 @@ pub trait ExpressionMethods: Expression + Sized {
         ))
     }
 
+    /// Generates a `CAST(expr AS sql_type)` expression
+    ///
+    /// It is necessary that the expression's SQL type can be casted to the
+    /// target SQL type (represented by the [`CastsTo`](cast::CastsTo) trait),
+    /// and that we know how the corresponding SQL type is named for the
+    /// specific backend (represented by the
+    /// [`KnownCastSqlTypeName`](cast::KnownCastSqlTypeName) trait).
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use schema::animals::dsl::*;
+    /// #     let connection = &mut establish_connection();
+    /// #
+    /// use diesel::sql_types;
+    ///
+    /// let data = diesel::select(
+    ///     12_i32
+    ///         .into_sql::<sql_types::Int4>()
+    ///         .cast::<sql_types::Text>(),
+    /// )
+    /// .first::<String>(connection)?;
+    /// assert_eq!("12", data);
+    /// #     Ok(())
+    /// # }
+    /// ```
+    fn cast<ST>(self) -> dsl::Cast<Self, ST>
+    where
+        ST: SingleValue,
+        Self::SqlType: cast::CastsTo<ST>,
+    {
+        cast::Cast::new(self)
+    }
+
+    /// Generates a `CAST(expr AS sql_type)` expression, this version does not check the castability, like [`cast()`](Self::cast).
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use schema::animals::dsl::*;
+    /// #     let connection = &mut establish_connection();
+    /// #
+    /// use diesel::sql_types;
+    ///
+    /// let data = diesel::select(
+    ///     "12".into_sql::<sql_types::Text>()
+    ///         .fallible_cast::<sql_types::Int8>(),
+    /// )
+    /// .first::<i64>(connection)?;
+    /// assert_eq!(12i64, data);
+    /// #     Ok(())
+    /// # }
+    /// ```
+    fn fallible_cast<ST>(self) -> dsl::Cast<Self, ST>
+    where
+        ST: SingleValue,
+        Self::SqlType: cast::FallibleCastsTo<ST>,
+    {
+        cast::Cast::new(self)
+    }
+
     /// Creates a SQL `DESC` expression, representing this expression in
     /// descending order.
     ///
@@ -531,11 +614,12 @@ pub trait NullableExpressionMethods: Expression + Sized {
     /// # allow_tables_to_appear_in_same_query!(posts, users);
     ///
     /// fn main() {
+    ///     use self::posts::dsl::{author_name, posts};
     ///     use self::users::dsl::*;
-    ///     use self::posts::dsl::{posts, author_name};
     ///     let connection = &mut establish_connection();
     ///
-    ///     let data = users.inner_join(posts)
+    ///     let data = users
+    ///         .inner_join(posts)
     ///         .filter(name.nullable().eq(author_name))
     ///         .select(name)
     ///         .load::<String>(connection);
@@ -648,8 +732,12 @@ pub trait NullableExpressionMethods: Expression + Sized {
     /// #       .set(posts::author_name.eq("Sean"))
     /// #       .execute(connection);
     ///
-    ///     let result = posts::table.left_join(users::table)
-    ///         .select((posts::id, (users::id, posts::author_name.assume_not_null()).nullable()))
+    ///     let result = posts::table
+    ///         .left_join(users::table)
+    ///         .select((
+    ///             posts::id,
+    ///             (users::id, posts::author_name.assume_not_null()).nullable(),
+    ///         ))
     ///         .order_by(posts::id)
     ///         .load::<(i32, Option<(i32, String)>)>(connection);
     ///     let expected = Ok(vec![

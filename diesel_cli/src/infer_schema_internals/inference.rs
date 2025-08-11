@@ -162,14 +162,20 @@ fn get_column_information(
     conn: &mut InferConnection,
     table: &TableName,
     column_sorting: &ColumnSorting,
+    pg_domains_as_custom_types: &[&regex::Regex],
 ) -> Result<Vec<ColumnInformation>, crate::errors::Error> {
+    #[cfg(not(feature = "postgres"))]
+    let _ = pg_domains_as_custom_types;
+
     let column_info = match *conn {
         #[cfg(feature = "sqlite")]
         InferConnection::Sqlite(ref mut c) => {
             super::sqlite::get_table_data(c, table, column_sorting)
         }
         #[cfg(feature = "postgres")]
-        InferConnection::Pg(ref mut c) => super::pg::get_table_data(c, table, column_sorting),
+        InferConnection::Pg(ref mut c) => {
+            super::pg::get_table_data(c, table, column_sorting, pg_domains_as_custom_types)
+        }
         #[cfg(feature = "mysql")]
         InferConnection::Mysql(ref mut c) => super::mysql::get_table_data(c, table, column_sorting),
     };
@@ -277,26 +283,37 @@ pub fn load_table_data(
 
     let primary_key = get_primary_keys(connection, &name)?;
 
-    let column_data = get_column_information(connection, &name, &config.column_sorting)?
-        .into_iter()
-        .map(|c| {
-            let ty = determine_column_type(&c, connection, &name, &primary_key, config)?;
+    let pg_domains_as_custom_types = config
+        .pg_domains_as_custom_types
+        .iter()
+        .map(|regex| regex as &regex::Regex)
+        .collect::<Vec<_>>();
 
-            let ColumnInformation {
-                column_name,
-                comment,
-                ..
-            } = c;
-            let rust_name = rust_name_for_sql_name(&column_name);
+    let column_data = get_column_information(
+        connection,
+        &name,
+        &config.column_sorting,
+        &pg_domains_as_custom_types,
+    )?
+    .into_iter()
+    .map(|c| {
+        let ty = determine_column_type(&c, connection, &name, &primary_key, config)?;
 
-            Ok(ColumnDefinition {
-                sql_name: column_name,
-                ty,
-                rust_name,
-                comment,
-            })
+        let ColumnInformation {
+            column_name,
+            comment,
+            ..
+        } = c;
+        let rust_name = rust_name_for_sql_name(&column_name);
+
+        Ok(ColumnDefinition {
+            sql_name: column_name,
+            ty,
+            rust_name,
+            comment,
         })
-        .collect::<Result<_, crate::errors::Error>>()?;
+    })
+    .collect::<Result<_, crate::errors::Error>>()?;
 
     let primary_key = primary_key
         .iter()

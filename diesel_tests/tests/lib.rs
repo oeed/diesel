@@ -11,6 +11,7 @@ extern crate assert_matches;
 #[macro_use]
 extern crate diesel;
 
+mod aggregate_expressions;
 mod alias;
 #[cfg(not(feature = "sqlite"))]
 mod annotations;
@@ -32,6 +33,7 @@ mod filter;
 mod filter_operators;
 mod find;
 mod group_by;
+mod has_query;
 mod having;
 mod index;
 mod insert;
@@ -61,3 +63,4 @@ mod transactions;
 mod types;
 mod types_roundtrip;
 mod update;
+mod window_functions;

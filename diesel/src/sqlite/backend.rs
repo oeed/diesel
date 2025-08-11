@@ -69,6 +69,15 @@ impl SqlDialect for Sqlite {
     type AliasSyntax = sql_dialect::alias_syntax::AsAliasSyntax;
 
     type FullJoinSupport = sql_dialect::full_join_support::PostgresLikeFullJoinSupport;
+
+    type WindowFrameClauseGroupSupport =
+        sql_dialect::window_frame_clause_group_support::IsoGroupWindowFrameUnit;
+    type WindowFrameExclusionSupport =
+        sql_dialect::window_frame_exclusion_support::FrameExclusionSupport;
+    type AggregateFunctionExpressions =
+        sql_dialect::aggregate_function_expressions::PostgresLikeAggregateFunctionExpressions;
+    type BuiltInWindowFunctionRequireOrder =
+        sql_dialect::built_in_window_function_require_order::NoOrderRequired;
 }
 
 impl DieselReserveSpecialization for Sqlite {}
@@ -78,6 +87,7 @@ impl TrustedBackend for Sqlite {}
 pub struct SqliteOnConflictClause;
 
 impl sql_dialect::on_conflict_clause::SupportsOnConflictClause for SqliteOnConflictClause {}
+impl sql_dialect::on_conflict_clause::SupportsOnConflictClauseWhere for SqliteOnConflictClause {}
 impl sql_dialect::on_conflict_clause::PgLikeOnConflictClause for SqliteOnConflictClause {}
 
 #[derive(Debug, Copy, Clone)]

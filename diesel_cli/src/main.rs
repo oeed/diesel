@@ -50,7 +50,7 @@ fn main() {
 }
 
 fn inner_main() -> Result<(), crate::errors::Error> {
-    let filter = EnvFilter::from_default_env();
+    let filter = EnvFilter::from_env("DIESEL_LOG");
     let fmt = tracing_subscriber::fmt::layer();
 
     tracing_subscriber::Registry::default()
@@ -149,7 +149,7 @@ fn create_config_file(
         let migrations_dir_toml_string = migrations_dir.display().to_string().replace('\\', "\\\\");
         let modified_content = source_content.replace(
             "dir = \"migrations\"",
-            &format!("dir = \"{}\"", migrations_dir_toml_string),
+            &format!("dir = \"{migrations_dir_toml_string}\""),
         );
         let mut file = fs::File::create(&path)
             .map_err(|e| crate::errors::Error::IoError(e, Some(path.to_owned())))?;

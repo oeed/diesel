@@ -2,7 +2,7 @@ use crate::attrs::AttributeSpanWrapper;
 use crate::field::Field;
 use crate::model::Model;
 use crate::util::{inner_of_option_ty, is_option_ty, wrap_in_dummy_mod};
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use quote::quote_spanned;
 use syn::parse_quote;
@@ -19,10 +19,6 @@ pub fn derive(item: DeriveInput) -> Result<TokenStream> {
         .collect::<Result<Vec<_>>>()?;
 
     Ok(wrap_in_dummy_mod(quote! {
-        use diesel::insertable::Insertable;
-        use diesel::internal::derives::insertable::UndecoratedInsertRecord;
-        use diesel::prelude::*;
-
         #(#tokens)*
     }))
 }
@@ -130,13 +126,13 @@ fn derive_into_single_table(
     }
 
     let insert_owned = quote! {
-        impl #impl_generics Insertable<#table_name::table> for #struct_name #ty_generics
+        impl #impl_generics diesel::insertable::Insertable<#table_name::table> for #struct_name #ty_generics
             #where_clause
         {
-            type Values = <(#(#direct_field_ty,)*) as Insertable<#table_name::table>>::Values;
+            type Values = <(#(#direct_field_ty,)*) as diesel::insertable::Insertable<#table_name::table>>::Values;
 
-            fn values(self) -> <(#(#direct_field_ty,)*) as Insertable<#table_name::table>>::Values {
-                (#(#direct_field_assign,)*).values()
+            fn values(self) -> <(#(#direct_field_ty,)*) as diesel::insertable::Insertable<#table_name::table>>::Values {
+                diesel::insertable::Insertable::<#table_name::table>::values((#(#direct_field_assign,)*))
             }
         }
     };
@@ -147,14 +143,14 @@ fn derive_into_single_table(
         let (impl_generics, ..) = impl_generics.split_for_impl();
 
         quote! {
-            impl #impl_generics Insertable<#table_name::table>
+            impl #impl_generics diesel::insertable::Insertable<#table_name::table>
                 for &'insert #struct_name #ty_generics
             #where_clause
             {
-                type Values = <(#(#ref_field_ty,)*) as Insertable<#table_name::table>>::Values;
+                type Values = <(#(#ref_field_ty,)*) as diesel::insertable::Insertable<#table_name::table>>::Values;
 
-                fn values(self) -> <(#(#ref_field_ty,)*) as Insertable<#table_name::table>>::Values {
-                    (#(#ref_field_assign,)*).values()
+                fn values(self) -> <(#(#ref_field_ty,)*) as diesel::insertable::Insertable<#table_name::table>>::Values {
+                    diesel::insertable::Insertable::<#table_name::table>::values((#(#ref_field_assign,)*))
                 }
             }
         }
@@ -167,7 +163,7 @@ fn derive_into_single_table(
 
         #insert_borrowed
 
-        impl #impl_generics UndecoratedInsertRecord<#table_name::table>
+        impl #impl_generics diesel::internal::derives::insertable::UndecoratedInsertRecord<#table_name::table>
                 for #struct_name #ty_generics
             #where_clause
         {
@@ -177,7 +173,7 @@ fn derive_into_single_table(
 
 fn field_ty_embed(field: &Field, lifetime: Option<TokenStream>) -> TokenStream {
     let field_ty = &field.ty;
-    let span = field.span;
+    let span = Span::mixed_site().located_at(field.span);
     quote_spanned!(span=> #lifetime #field_ty)
 }
 
@@ -193,7 +189,7 @@ fn field_ty_serialize_as(
     treat_none_as_default_value: bool,
 ) -> Result<TokenStream> {
     let column_name = field.column_name()?.to_ident()?;
-    let span = field.span;
+    let span = Span::mixed_site().located_at(field.span);
     if treat_none_as_default_value {
         let inner_ty = inner_of_option_ty(ty);
 
@@ -224,14 +220,18 @@ fn field_expr_serialize_as(
     let column = quote!(#table_name::#column_name);
     if treat_none_as_default_value {
         if is_option_ty(ty) {
-            Ok(quote!(::std::convert::Into::<#ty>::into(self.#field_name).map(|v| #column.eq(v))))
+            Ok(
+                quote!(::std::convert::Into::<#ty>::into(self.#field_name).map(|v| diesel::ExpressionMethods::eq(#column, v))),
+            )
         } else {
             Ok(
-                quote!(std::option::Option::Some(#column.eq(::std::convert::Into::<#ty>::into(self.#field_name)))),
+                quote!(std::option::Option::Some(diesel::ExpressionMethods::eq(#column, ::std::convert::Into::<#ty>::into(self.#field_name)))),
             )
         }
     } else {
-        Ok(quote!(#column.eq(::std::convert::Into::<#ty>::into(self.#field_name))))
+        Ok(
+            quote!(diesel::ExpressionMethods::eq(#column, ::std::convert::Into::<#ty>::into(self.#field_name))),
+        )
     }
 }
 
@@ -242,7 +242,7 @@ fn field_ty(
     treat_none_as_default_value: bool,
 ) -> Result<TokenStream> {
     let column_name = field.column_name()?.to_ident()?;
-    let span = field.span;
+    let span = Span::mixed_site().located_at(field.span);
     if treat_none_as_default_value {
         let inner_ty = inner_of_option_ty(&field.ty);
 
@@ -277,14 +277,18 @@ fn field_expr(
     if treat_none_as_default_value {
         if is_option_ty(&field.ty) {
             if lifetime.is_some() {
-                Ok(quote!(self.#field_name.as_ref().map(|x| #column.eq(x))))
+                Ok(
+                    quote!(self.#field_name.as_ref().map(|x| diesel::ExpressionMethods::eq(#column, x))),
+                )
             } else {
-                Ok(quote!(self.#field_name.map(|x| #column.eq(x))))
+                Ok(quote!(self.#field_name.map(|x| diesel::ExpressionMethods::eq(#column, x))))
             }
         } else {
-            Ok(quote!(std::option::Option::Some(#column.eq(#lifetime self.#field_name))))
+            Ok(
+                quote!(std::option::Option::Some(diesel::ExpressionMethods::eq(#column, #lifetime self.#field_name))),
+            )
         }
     } else {
-        Ok(quote!(#column.eq(#lifetime self.#field_name)))
+        Ok(quote!(diesel::ExpressionMethods::eq(#column, #lifetime self.#field_name)))
     }
 }

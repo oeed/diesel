@@ -97,34 +97,34 @@
 //! The following error messages are common:
 //!
 //! * `the trait bound (diesel::sql_types::Integer, …, diesel::sql_types::Text): load_dsl::private::CompatibleType<YourModel, Pg> is not satisfied`
-//!    while trying to execute a query:
-//!    This error indicates a mismatch between what your query returns and what your model struct
-//!    expects the query to return. The fields need to match in terms of field order, field type
-//!    and field count. If you are sure that everything matches, double check the enabled diesel
-//!    features (for support for types from other crates) and double check (via `cargo tree`)
-//!    that there is only one version of such a shared crate in your dependency tree.
-//!    Consider using [`#[derive(Selectable)]`](derive@crate::prelude::Selectable) +
-//!    `#[diesel(check_for_backend(diesel::pg::Pg))]`
-//!    to improve the generated error message.
+//!   while trying to execute a query:
+//!   This error indicates a mismatch between what your query returns and what your model struct
+//!   expects the query to return. The fields need to match in terms of field order, field type
+//!   and field count. If you are sure that everything matches, double check the enabled diesel
+//!   features (for support for types from other crates) and double check (via `cargo tree`)
+//!   that there is only one version of such a shared crate in your dependency tree.
+//!   Consider using [`#[derive(Selectable)]`](derive@crate::prelude::Selectable) +
+//!   `#[diesel(check_for_backend(diesel::pg::Pg))]`
+//!   to improve the generated error message.
 //! * `the trait bound i32: diesel::Expression is not satisfied` in the context of `Insertable`
-//!    model structs:
-//!    This error indicates a type mismatch between the field you are trying to insert into the database
-//!    and the actual database type. These error messages contain a line
-//!    like ` = note: required for i32 to implement AsExpression<diesel::sql_types::Text>`
-//!    that show both the provided rust side type (`i32` in that case) and the expected
-//!    database side type (`Text` in that case).
+//!   model structs:
+//!   This error indicates a type mismatch between the field you are trying to insert into the database
+//!   and the actual database type. These error messages contain a line
+//!   like ` = note: required for i32 to implement AsExpression<diesel::sql_types::Text>`
+//!   that show both the provided rust side type (`i32` in that case) and the expected
+//!   database side type (`Text` in that case).
 //! * `the trait bound i32: AppearsOnTable<users::table> is not satisfied` in the context of `AsChangeset`
-//!    model structs:
-//!    This error indicates a type mismatch between the field you are trying to update and the actual
-//!    database type. Double check your type mapping.
+//!   model structs:
+//!   This error indicates a type mismatch between the field you are trying to update and the actual
+//!   database type. Double check your type mapping.
 //! * `the trait bound SomeLargeType: QueryFragment<Sqlite, SomeMarkerType> is not satisfied` while
-//!    trying to execute a query.
-//!    This error message indicates that a given query is not supported by your backend. This usually
-//!    means that you are trying to use SQL features from one SQL dialect on a different database
-//!    system. Double check your query that everything required is supported by the selected
-//!    backend. If that's the case double check that the relevant feature flags are enabled
-//!    (for example, `returning_clauses_for_sqlite_3_35` for enabling support for returning clauses in newer
-//!    sqlite versions)
+//!   trying to execute a query.
+//!   This error message indicates that a given query is not supported by your backend. This usually
+//!   means that you are trying to use SQL features from one SQL dialect on a different database
+//!   system. Double check your query that everything required is supported by the selected
+//!   backend. If that's the case double check that the relevant feature flags are enabled
+//!   (for example, `returning_clauses_for_sqlite_3_35` for enabling support for returning clauses in newer
+//!   sqlite versions)
 //! * `the trait bound posts::title: SelectableExpression<users::table> is not satisfied` while
 //!    executing a query:
 //!    This error message indicates that you're trying to select a field from a table
@@ -232,7 +232,8 @@
     feature = "unstable",
     warn(fuzzy_provenance_casts, lossy_provenance_casts)
 )]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg, rustdoc_internals))]
+#![cfg_attr(docsrs, expect(internal_features))]
 #![cfg_attr(feature = "128-column-tables", recursion_limit = "256")]
 // Built-in Lints
 #![warn(
@@ -771,6 +772,7 @@ pub mod helper_types {
 }
 
 pub mod prelude {
+
     //! Re-exports important traits and types. Meant to be glob imported when using Diesel.
 
     #[doc(inline)]
@@ -804,6 +806,8 @@ pub mod prelude {
     pub use crate::insertable::Insertable;
     #[doc(inline)]
     pub use crate::macros::prelude::*;
+    #[doc(inline)]
+    pub use crate::query_builder::has_query::HasQuery;
     #[doc(inline)]
     pub use crate::query_builder::AsChangeset;
     #[doc(inline)]

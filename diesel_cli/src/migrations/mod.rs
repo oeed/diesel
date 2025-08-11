@@ -25,18 +25,14 @@ pub(super) fn run_migration_command(matches: &ArgMatches) -> Result<(), crate::e
         .expect("Clap ensures a subcommand is set")
     {
         ("run", _) => {
-            let mut conn = InferConnection::from_matches(matches)?;
-            let dir = migrations_dir(matches)?;
-            let dir = FileBasedMigrations::from_path(dir)
-                .map_err(|e| crate::errors::Error::MigrationError(Box::new(e)))?;
+            let (mut conn, dir) = conn_and_migration_dir(matches)?;
+
             run_migrations_with_output(&mut conn, dir)?;
             regenerate_schema_if_file_specified(matches)?;
         }
         ("revert", args) => {
-            let mut conn = InferConnection::from_matches(matches)?;
-            let dir = migrations_dir(matches)?;
-            let dir = FileBasedMigrations::from_path(dir)
-                .map_err(|e| crate::errors::Error::MigrationError(Box::new(e)))?;
+            let (mut conn, dir) = conn_and_migration_dir(matches)?;
+
             if args.get_flag("REVERT_ALL") {
                 revert_all_migrations_with_output(&mut conn, dir)?;
             } else {
@@ -62,25 +58,21 @@ pub(super) fn run_migration_command(matches: &ArgMatches) -> Result<(), crate::e
             regenerate_schema_if_file_specified(matches)?;
         }
         ("redo", args) => {
-            let mut conn = InferConnection::from_matches(matches)?;
-            let dir = migrations_dir(matches)?;
-            let dir = FileBasedMigrations::from_path(dir)
-                .map_err(|e| crate::errors::Error::MigrationError(Box::new(e)))?;
+            let (mut conn, dir) = conn_and_migration_dir(matches)?;
+
             redo_migrations(&mut conn, dir, args)?;
             regenerate_schema_if_file_specified(matches)?;
         }
+
         ("list", _) => {
-            let mut conn = InferConnection::from_matches(matches)?;
-            let dir = migrations_dir(matches)?;
-            let dir = FileBasedMigrations::from_path(dir)
-                .map_err(|e| crate::errors::Error::MigrationError(Box::new(e)))?;
+            let (mut conn, dir) = conn_and_migration_dir(matches)?;
+
             list_migrations(&mut conn, dir)?;
         }
+
         ("pending", _) => {
-            let mut conn = InferConnection::from_matches(matches)?;
-            let dir = migrations_dir(matches)?;
-            let dir = FileBasedMigrations::from_path(dir)
-                .map_err(|e| crate::errors::Error::MigrationError(Box::new(e)))?;
+            let (mut conn, dir) = conn_and_migration_dir(matches)?;
+
             let result = MigrationHarness::has_pending_migration(&mut conn, dir)
                 .map_err(crate::errors::Error::MigrationError)?;
             println!("{result:?}");
@@ -169,6 +161,21 @@ pub(super) fn run_migration_command(matches: &ArgMatches) -> Result<(), crate::e
     };
 
     Ok(())
+}
+
+/// Creates a connection to the database and a migration directory
+/// from the command line arguments.
+///
+/// See [migrations_dir] for more information on how the migration directory is found.
+fn conn_and_migration_dir(
+    matches: &ArgMatches,
+) -> Result<(InferConnection, FileBasedMigrations), crate::errors::Error> {
+    let conn = InferConnection::from_matches(matches)?;
+    let dir = migrations_dir(matches)?;
+    let dir = FileBasedMigrations::from_path(dir.clone())
+        .map_err(|e| crate::errors::Error::from_migration_error(e, Some(dir)))?;
+
+    Ok((conn, dir))
 }
 
 /// Opens the .diesel_lock file inside the migrations folder
@@ -421,7 +428,7 @@ pub fn migrations_dir(matches: &ArgMatches) -> Result<PathBuf, crate::errors::Er
         Some(dir) => dir,
         None => FileBasedMigrations::find_migrations_directory()
             .map(|p| p.path().to_path_buf())
-            .map_err(|e| crate::errors::Error::MigrationError(Box::new(e))),
+            .map_err(|e| crate::errors::Error::from_migration_error::<PathBuf>(e, None)),
     }
 }
 

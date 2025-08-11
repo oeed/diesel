@@ -381,6 +381,14 @@ impl Config {
                 let derives = derives.cloned().collect();
                 config.custom_type_derives = Some(derives);
             }
+
+            if let Some(domains) = matches.get_many::<String>("pg-domains-as-custom-types") {
+                config.pg_domains_as_custom_types = domains
+                    .into_iter()
+                    .map(|x| regex::Regex::new(x).map(Into::into))
+                    .collect::<Result<Vec<Regex>, _>>()?;
+            }
+
             if matches.get_flag("sqlite-integer-primary-key-is-bigint") {
                 config.sqlite_integer_primary_key_is_bigint = Some(true);
             }
@@ -465,6 +473,8 @@ pub struct PrintSchema {
     pub custom_type_derives: Option<Vec<String>>,
     #[serde(default)]
     pub sqlite_integer_primary_key_is_bigint: Option<bool>,
+    #[serde(default)]
+    pub pg_domains_as_custom_types: Vec<Regex>,
 }
 
 impl PrintSchema {

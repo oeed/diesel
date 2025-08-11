@@ -455,12 +455,9 @@ impl FromSql<PgProtocolType, Pg> for ProtocolType {
             b"GRPC" => Ok(ProtocolType::GRPC),
             b"HTTP" => Ok(ProtocolType::HTTP),
             b"UDP" => Ok(ProtocolType::UDP),
-            _ => Err(DatabaseError(
-                DatabaseErrorKind::SerializationFailure,
-                Box::new(format!(
-                    "Unrecognized enum variant: {:?}",
-                    String::from_utf8_lossy(bytes.as_bytes())
-                )),
+            _ => Err(format!(
+                "Unrecognized enum variant: {:?}",
+                String::from_utf8_lossy(bytes.as_bytes())
             )
             .into()),
         }
@@ -992,7 +989,7 @@ fn postgres_connection() -> PgConnection {
     .expect("PG_DATABASE_URL must be set");
     
     PgConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+        .unwrap_or_else(|e| panic!("Failed to connect, error: {}", e))
 }
 ```
 
