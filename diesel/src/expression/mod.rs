@@ -51,7 +51,7 @@ pub use self::operators::Concat;
 // for every item in this module. We reexport
 // everything from `crate::helper_types::`
 #[allow(non_camel_case_types, unreachable_pub)]
-pub(crate) mod dsl {
+pub mod dsl {
     use crate::dsl::SqlTypeOf;
 
     #[doc(inline)]
