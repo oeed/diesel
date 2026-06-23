@@ -25,7 +25,8 @@ pub mod array_comparison;
 pub(crate) mod assume_not_null;
 pub(crate) mod bound;
 mod coerce;
-pub(crate) mod count;
+/// TODO: avoid needing this public: should be possible once windowing functions are available
+pub mod count;
 #[cfg(not(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))]
 pub(crate) mod exists;
 #[cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes")]
@@ -50,7 +51,7 @@ pub use self::operators::Concat;
 // for every item in this module. We reexport
 // everything from `crate::helper_types::`
 #[allow(non_camel_case_types, unreachable_pub)]
-pub(crate) mod dsl {
+pub mod dsl {
     use crate::dsl::SqlTypeOf;
 
     #[doc(inline)]
@@ -337,8 +338,8 @@ where
 /// expressions will implement this if each of their parts implement it.
 ///
 /// Notably, columns will not implement this trait for the right side of a left
-/// join. To select a column or expression using a column from the right side of
-/// a left join, you must call `.nullable()` on it.
+/// join, or either side of a full join. To select a column or expression using
+/// a column from the nullable side of such a join, you must call `.nullable()` on it.
 #[diagnostic::on_unimplemented(
     message = "cannot select `{Self}` from `{QS}`",
     note = "`{Self}` is no valid selection for `{QS}`"

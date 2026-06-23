@@ -91,6 +91,8 @@ impl SqlDialect for Mysql {
     type ConcatClause = MysqlConcatClause;
     type AliasSyntax = sql_dialect::alias_syntax::AsAliasSyntax;
 
+    type FullJoinSupport = sql_dialect::full_join_support::NoFullJoinSupport;
+
     type WindowFrameClauseGroupSupport =
         sql_dialect::window_frame_clause_group_support::NoGroupWindowFrameUnit;
 

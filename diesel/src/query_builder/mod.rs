@@ -28,12 +28,14 @@ pub(crate) mod nodes;
 pub(crate) mod offset_clause;
 pub(crate) mod order_clause;
 pub(crate) mod returning_clause;
-pub(crate) mod select_clause;
+/// TODO: avoid needing this public: should be possible once windowing functions are available
+pub mod select_clause;
 pub(crate) mod select_statement;
 mod sql_query;
 pub(crate) mod update_statement;
 pub(crate) mod upsert;
-pub(crate) mod where_clause;
+/// TODO: avoid needing this public
+pub mod where_clause;
 
 #[doc(inline)]
 pub use self::ast_pass::AstPass;

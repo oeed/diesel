@@ -314,6 +314,24 @@ pub trait SqlDialect: self::private::TrustedBackend {
     )]
     type AliasSyntax;
 
+    /// Configures how this backend supports `FULL JOIN` clauses
+    ///
+    /// This allows backends to opt in to [`.full_join(rhs)`](crate::prelude::QueryDsl::full_join) support and to
+    /// provide a custom [`QueryFragment`](crate::query_builder::QueryFragment)
+    #[cfg_attr(
+        feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
+        doc = "implementation for [`FullJoinSupport`](crate::query_builder::FullJoinSupport)"
+    )]
+    #[cfg_attr(
+        not(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"),
+        doc = "implementation for `FullJoinSupport`"
+    )]
+    ///
+    #[cfg_attr(
+        feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
+        doc = "See [`sql_dialect::full_join`] for provided default implementations"
+    )]
+    type FullJoinSupport;
     /// Configures how this backend support the `GROUP` frame unit for window functions
     #[cfg_attr(
         feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
@@ -562,6 +580,22 @@ pub(crate) mod sql_dialect {
         /// defining table aliases
         #[derive(Debug, Copy, Clone)]
         pub struct AsAliasSyntax;
+    }
+
+    /// This module contains all reusable options to configure
+    /// [`SqlDialect::FullJoinSupport`]
+    #[diesel_derives::__diesel_public_if(
+        feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"
+    )]
+    pub mod full_join_support {
+        /// Indicates that a backend provides support for `FULL JOIN` clauses
+        /// using the postgresql `FULL (OUTER) JOIN` syntax
+        #[derive(Debug, Copy, Clone)]
+        pub struct PostgresLikeFullJoinSupport;
+
+        /// Indicates that a backend does not support `FULL JOIN` clauses
+        #[derive(Debug, Copy, Clone)]
+        pub struct NoFullJoinSupport;
     }
 
     /// This module contains all reusable options to configure [`SqlDialect::WindowFrameClauseGroupSupport`]
