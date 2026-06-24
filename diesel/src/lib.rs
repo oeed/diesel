@@ -688,10 +688,10 @@ pub mod helper_types {
     /// #     let query =
     /// posts::table.full_join(comments::table.on(join_constraint));
     /// #
-    /// #     // Dummy usage just to ensure the example compiles.
-    /// #     let filter = posts::columns::id.eq(1);
-    /// #     let filter: &FilterExpression<_> = &filter;
-    /// #     query.filter(filter).select(posts::columns::id.nullable()).get_result::<Option<i32>>(conn)?;
+    /// #     // A full join makes both sides nullable, so columns need `.nullable()`.
+    /// #     query
+    /// #         .select((posts::columns::id.nullable(), comments::columns::id.nullable()))
+    /// #         .load::<(Option<i32>, Option<i32>)>(conn)?;
     /// #
     /// #     Ok(())
     /// # }
