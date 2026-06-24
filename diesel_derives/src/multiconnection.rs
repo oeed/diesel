@@ -1361,7 +1361,11 @@ fn generate_querybuilder(connection_types: &[ConnectionVariant]) -> TokenStream 
                 pass: diesel::query_builder::AstPass<'_, 'b, MultiBackend>,
             ) -> diesel::QueryResult<()> {
                 use diesel::internal::derives::multiconnection::BoxedQueryHelper;
-                self.build_query(pass, |where_clause, pass| where_clause.walk_ast(pass))
+                self.build_query(
+                    pass,
+                    |where_clause, pass| where_clause.walk_ast(pass),
+                    |having_clause, pass| having_clause.walk_ast(pass),
+                )
             }
         }
 

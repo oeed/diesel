@@ -713,7 +713,7 @@ pub trait QueryDsl: Sized {
     /// #         .first::<i32>(connection)?;
     /// let join = users::table.full_join(posts::table);
     ///
-    /// // As full joins may have NULL values on both sides, `.nullable` is required on all columnes.
+    /// // As full joins may have NULL values on both sides, `.nullable` is required on all columns.
     /// let names_and_titles = join.select((users::name.nullable(), posts::title.nullable()))
     ///     .load::<(Option<String>, Option<String>)>(connection)?;
     /// let expected_data = vec![

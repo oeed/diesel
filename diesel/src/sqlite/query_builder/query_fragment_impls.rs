@@ -32,12 +32,16 @@ where
 {
     fn walk_ast<'b>(&'b self, pass: AstPass<'_, 'b, crate::sqlite::Sqlite>) -> QueryResult<()> {
         // https://www.sqlite.org/lang_UPSERT.html (Parsing Ambiguity)
-        self.0.build_query(pass, |where_clause, mut pass| {
-            match where_clause {
-                BoxedWhereClause::None => pass.push_sql(" WHERE 1=1 "),
-                w => w.walk_ast(pass.reborrow())?,
-            }
-            Ok(())
-        })
+        self.0.build_query(
+            pass,
+            |where_clause, mut pass| {
+                match where_clause {
+                    BoxedWhereClause::None => pass.push_sql(" WHERE 1=1 "),
+                    w => w.walk_ast(pass.reborrow())?,
+                }
+                Ok(())
+            },
+            |having_clause, pass| having_clause.walk_ast(pass),
+        )
     }
 }
