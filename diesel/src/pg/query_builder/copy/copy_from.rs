@@ -55,8 +55,11 @@ impl QueryFragment<Pg> for CopyFromOptions {
                 pass.push_sql(comma);
                 comma = ", ";
                 pass.push_sql("DEFAULT '");
-                // cannot use binds here :(
-                pass.push_sql(default);
+                // we cannot use binds here
+                // so we need to make sure quotes in
+                // the input are handled correctly
+                let default = default.replace('\'', "''");
+                pass.push_sql(&default);
                 pass.push_sql("'");
             }
             if let Some(ref header) = self.header {
@@ -445,6 +448,10 @@ impl<T, C, F> CopyFromQuery<T, CopyFrom<C, F>> {
     ///
     /// See the [PostgreSQL documentation](https://www.postgresql.org/docs/current/sql-copy.html)
     /// for more details.
+    ///
+    /// Diesel will automatically escape the provided delimiter for the default
+    /// PostgreSQL setting `standard_conforming_strings=on`. If you use a non-standard
+    /// conforming setting you need to take care of escaping the value on your own
     pub fn with_delimiter(mut self, delimiter: char) -> Self {
         self.action.options.common.delimiter = Some(delimiter);
         self
@@ -455,6 +462,10 @@ impl<T, C, F> CopyFromQuery<T, CopyFrom<C, F>> {
     ///
     /// See the [PostgreSQL documentation](https://www.postgresql.org/docs/current/sql-copy.html)
     /// for more details.
+    ///
+    /// Diesel will automatically escape the provided delimiter for the default
+    /// PostgreSQL setting `standard_conforming_strings=on`. If you use a non-standard
+    /// conforming setting you need to take care of escaping the value on your own
     pub fn with_null(mut self, null: impl Into<String>) -> Self {
         self.action.options.common.null = Some(null.into());
         self
@@ -464,6 +475,10 @@ impl<T, C, F> CopyFromQuery<T, CopyFrom<C, F>> {
     ///
     /// See the [PostgreSQL documentation](https://www.postgresql.org/docs/current/sql-copy.html)
     /// for more details.
+    ///
+    /// Diesel will automatically escape the provided delimiter for the default
+    /// PostgreSQL setting `standard_conforming_strings=on`. If you use a non-standard
+    /// conforming setting you need to take care of escaping the value on your own
     pub fn with_quote(mut self, quote: char) -> Self {
         self.action.options.common.quote = Some(quote);
         self
@@ -473,6 +488,10 @@ impl<T, C, F> CopyFromQuery<T, CopyFrom<C, F>> {
     ///
     /// See the [PostgreSQL documentation](https://www.postgresql.org/docs/current/sql-copy.html)
     /// for more details.
+    ///
+    /// Diesel will automatically escape the provided delimiter for the default
+    /// PostgreSQL setting `standard_conforming_strings=on`. If you use a non-standard
+    /// conforming setting you need to take care of escaping the value on your own
     pub fn with_escape(mut self, escape: char) -> Self {
         self.action.options.common.escape = Some(escape);
         self
@@ -486,6 +505,10 @@ impl<T, C, F> CopyFromQuery<T, CopyFrom<C, F>> {
     /// for more details.
     ///
     /// (This parameter was added with PostgreSQL 16)
+    ///
+    /// Diesel will automatically escape the provided delimiter for the default
+    /// PostgreSQL setting `standard_conforming_strings=on`. If you use a non-standard
+    /// conforming setting you need to take care of escaping the value on your own
     pub fn with_default(mut self, default: impl Into<String>) -> Self {
         self.action.options.default = Some(default.into());
         self

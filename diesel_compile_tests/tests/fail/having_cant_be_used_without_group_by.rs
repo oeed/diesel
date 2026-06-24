@@ -26,13 +26,13 @@ fn main() {
     users::table
         .select(users::name)
         .having(users::id.gt(1))
-        //~^ ERROR: the trait bound `SelectStatement<FromClause<table>, SelectClause<name>>: HavingDsl<_>` is not satisfied
+        //~^ ERROR: the trait bound `SelectStatement<..., ...>: HavingDsl<_>` is not satisfied
         .load(&mut conn);
 
     users::table
         .into_boxed()
         .having(users::id.gt(1))
-        //~^ ERROR: the trait bound `(): diesel::Expression` is not satisfied
+        //~^ ERROR: the trait bound `(): Expression` is not satisfied
         .load(&mut conn);
 
     users::table

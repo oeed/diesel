@@ -1,31 +1,34 @@
-error[E0277]: the trait bound `str: diesel::Expression` is not satisfied
+error[E0277]: the trait bound `&str: AsExpression<diesel::sql_types::Integer>` is not satisfied
   --> tests/fail/expressions_can_only_be_compared_for_equality_to_expressions_of_same_type.rs:15:19
    |
 LL |     let pred = id.eq("string");
-   |                   ^^ the trait `diesel::Expression` is not implemented for `str`
+   |                   ^^ the trait `AsExpression<diesel::sql_types::Integer>` is not implemented for `&str`
    |
-   = help: the following other types implement trait `diesel::Expression`:
-             &T
-             AliasedField<S, C>
-             Box<T>
-             CaseWhen<diesel::expression::case_when::non_public_types::CaseWhenConditionsIntermediateNode<W, T, Whens>, E>
-             CaseWhen<diesel::expression::case_when::non_public_types::CaseWhenConditionsLeaf<W, T>, diesel::expression::case_when::non_public_types::ElseExpression<E>>
-             CaseWhen<diesel::expression::case_when::non_public_types::CaseWhenConditionsLeaf<W, T>, diesel::expression::case_when::non_public_types::NoElseExpression>
-             CountStar
-             Exists<T>
-           and N others
-   = note: required for `&str` to implement `diesel::Expression`
-   = note: required for `&str` to implement `AsExpression<diesel::sql_types::Integer>`
+   = help: `&str` implements trait `AsExpression<T>`:
+             AsExpression<Citext>
+             AsExpression<diesel::sql_types::Date>
+             AsExpression<diesel::sql_types::Text>
+             AsExpression<diesel::sql_types::Time>
+             AsExpression<diesel::sql_types::Timestamp>
 
-error[E0271]: type mismatch resolving `<name as Expression>::SqlType == Integer`
+error[E0277]: the trait bound `columns::name: AsExpression<diesel::sql_types::Integer>` is not satisfied
   --> tests/fail/expressions_can_only_be_compared_for_equality_to_expressions_of_same_type.rs:17:19
    |
 LL |     let pred = id.eq(name);
-   |                   ^^ type mismatch resolving `<name as Expression>::SqlType == Integer`
+   |                   ^^ unsatisfied trait bound
    |
-note: expected this to be `diesel::sql_types::Integer`
-  --> tests/fail/expressions_can_only_be_compared_for_equality_to_expressions_of_same_type.rs:8:17
+help: the trait `AsExpression<diesel::sql_types::Integer>` is not implemented for `columns::name`
+  --> tests/fail/expressions_can_only_be_compared_for_equality_to_expressions_of_same_type.rs:8:9
    |
-8  |         name -> VarChar,
-   |                 ^^^^^^^
-   = note: required for `columns::name` to implement `AsExpression<diesel::sql_types::Integer>`
+ LL |         name -> VarChar,
+   |         ^^^^
+help: the following other types implement trait `AsExpression<T>`
+  --> DIESEL/diesel/diesel/src/type_impls/primitives.rs
+   |
+LL |     #[derive(AsExpression, FromSqlRow)]
+   |              ^^^^^^^^^^^^
+   |              |
+   |              `&'__expr i32`
+   |              `i32`
+   = note: this error originates in the macro `table` which comes from the expansion of the derive macro `AsExpression` (in Nightly builds, run with -Z macro-backtrace for more info)
+For more information about this error, try `rustc --explain E0277`.

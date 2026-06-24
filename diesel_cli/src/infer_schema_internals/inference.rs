@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use diesel::result::Error::NotFound;
 
 use super::data_structures::*;
@@ -62,6 +64,7 @@ static RESERVED_NAMES: &[&str] = &[
     "while",
     "yield",
     "bool",
+    "table",
     "columns",
     "is_nullable",
 ];
@@ -80,8 +83,8 @@ fn contains_unmappable_chars(name: &str) -> bool {
     !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
 
-pub fn rust_name_for_sql_name(sql_name: &str) -> String {
-    if is_reserved_name(sql_name) {
+pub fn rust_name_for_sql_name(sql_name: &str, table_name: Option<&TableName>) -> String {
+    if is_reserved_name(sql_name) || Some(sql_name) == table_name.map(|t| t.rust_name.as_str()) {
         format!("{sql_name}_")
     } else if contains_unmappable_chars(sql_name) {
         // Map each non-alphanumeric character ([^a-zA-Z0-9]) to an underscore.
@@ -193,13 +196,19 @@ fn determine_column_type(
     conn: &mut InferConnection,
     #[allow(unused_variables)] table: &TableName,
     #[allow(unused_variables)] primary_keys: &[String],
+    #[allow(unused_variables)] foreign_keys: &HashMap<String, ForeignKeyConstraint>,
     #[allow(unused_variables)] config: &PrintSchema,
 ) -> Result<ColumnType, crate::errors::Error> {
     match *conn {
         #[cfg(feature = "sqlite")]
-        InferConnection::Sqlite(ref mut conn) => {
-            super::sqlite::determine_column_type(conn, attr, table, primary_keys, config)
-        }
+        InferConnection::Sqlite(ref mut conn) => super::sqlite::determine_column_type(
+            conn,
+            attr,
+            table,
+            primary_keys,
+            foreign_keys,
+            config,
+        ),
         #[cfg(feature = "postgres")]
         InferConnection::Pg(ref mut conn) => {
             use crate::infer_schema_internals::information_schema::DefaultSchema;
@@ -282,6 +291,16 @@ pub fn load_table_data(
     };
 
     let primary_key = get_primary_keys(connection, &name)?;
+    let foreign_keys = load_foreign_key_constraints(connection, name.schema.as_deref())?
+        .into_iter()
+        .filter_map(|c| {
+            if c.child_table == name && c.foreign_key_columns.len() == 1 {
+                Some((c.foreign_key_columns_rust[0].clone(), c))
+            } else {
+                None
+            }
+        })
+        .collect();
 
     let pg_domains_as_custom_types = config
         .pg_domains_as_custom_types
@@ -297,14 +316,14 @@ pub fn load_table_data(
     )?
     .into_iter()
     .map(|c| {
-        let ty = determine_column_type(&c, connection, &name, &primary_key, config)?;
+        let ty = determine_column_type(&c, connection, &name, &primary_key, &foreign_keys, config)?;
 
         let ColumnInformation {
             column_name,
             comment,
             ..
         } = c;
-        let rust_name = rust_name_for_sql_name(&column_name);
+        let rust_name = rust_name_for_sql_name(&column_name, Some(&name));
 
         Ok(ColumnDefinition {
             sql_name: column_name,
@@ -317,7 +336,7 @@ pub fn load_table_data(
 
     let primary_key = primary_key
         .iter()
-        .map(|k| rust_name_for_sql_name(k))
+        .map(|k| rust_name_for_sql_name(k, Some(&name)))
         .collect::<Vec<_>>();
 
     Ok(TableData {

@@ -155,6 +155,7 @@ impl<Expr> ValidWhereClause<NoFromClause> for WhereClause<Expr> where
 }
 
 #[allow(missing_debug_implementations)] // We can't...
+#[doc(hidden)]
 pub enum BoxedWhereClause<'a, DB> {
     Where(Box<dyn QueryFragment<DB> + Send + 'a>),
     None,

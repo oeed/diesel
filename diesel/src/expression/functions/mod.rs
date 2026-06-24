@@ -101,11 +101,13 @@ macro_rules! no_arg_sql_function {
     };
 }
 
-/// TODO: avoid needing this public: should be possible once windowing functions are available
-pub mod aggregate_folding;
-/// TODO: avoid needing this public: should be possible once windowing functions are available
-pub mod aggregate_ordering;
 pub(crate) mod aggregate_expressions;
+/// Public so downstream crates can name the `sum` aggregate type as a generic
+/// bound, for the same reason as the `count` module.
+pub mod aggregate_folding;
+/// Public so downstream crates can name the `max`/`min` aggregate types as
+/// generic bounds, for the same reason as the `count` module.
+pub mod aggregate_ordering;
 pub(crate) mod date_and_time;
 pub(crate) mod helper_types;
 pub(crate) mod window_functions;

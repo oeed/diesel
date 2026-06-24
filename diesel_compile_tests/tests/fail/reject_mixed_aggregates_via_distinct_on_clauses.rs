@@ -50,7 +50,7 @@ fn main() {
     let _ = posts::table
         .distinct_on(posts::user_id)
         .count()
-        //~^ ERROR: the trait bound `SelectStatement<FromClause<table>, ..., ...>: SelectDsl<...>` is not satisfied
+        //~^ ERROR: the trait bound `SelectStatement<..., ..., ...>: SelectDsl<...>` is not satisfied
         .get_result::<i64>(&mut conn);
 
     let _ = posts::table

@@ -46,6 +46,7 @@ fn write_post() {
                 + EOF
                 + " when finished)\n\n\nSaved draft Test Title with id 1\n",
         );
+
     let _ = Command::cargo_bin("show_posts")
         .unwrap()
         .env("MYSQL_DATABASE_URL", db_url.to_string())

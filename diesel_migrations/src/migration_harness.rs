@@ -28,14 +28,6 @@ pub trait MigrationHarness<DB: Backend> {
     }
 
     /// Execute all unapplied migrations for a given migration source
-    ///
-    /// # Concurrent Usage Safety
-    /// This method can be safely called concurrently from multiple processes. The behavior is as follows:
-    ///
-    /// * All migrations are applied atomically by the first process that successfully acquires the database lock
-    /// * Concurrent processes attempting to run migrations while the lock is held will receive a "database is locked" error
-    /// * Processes that start after successful migration completion will find no pending migrations and complete successfully
-    /// * Each migration is guaranteed to be applied exactly once
     fn run_pending_migrations<S: MigrationSource<DB>>(
         &mut self,
         source: S,
@@ -142,6 +134,11 @@ pub trait MigrationHarness<DB: Backend> {
     ///
     /// Types implementing this trait should call [`Migration::run`] internally and record
     /// that a specific migration version was executed afterwards.
+    ///
+    /// The default implementation wraps the migration in a transaction when the migration
+    /// metadata reports `run_in_transaction = true` (the default). See
+    /// [`FileBasedMigrations`](crate::FileBasedMigrations) to learn how to configure
+    /// this for a specific migration.
     fn run_migration(&mut self, migration: &dyn Migration<DB>)
         -> Result<MigrationVersion<'static>>;
 
@@ -149,6 +146,11 @@ pub trait MigrationHarness<DB: Backend> {
     ///
     /// Types implementing this trait should call [`Migration::revert`] internally
     /// and record that a specific migration version was reverted afterwards.
+    ///
+    /// The default implementation wraps the revert in a transaction when the migration
+    /// metadata reports `run_in_transaction = true` (the default). See
+    /// [`FileBasedMigrations`](crate::FileBasedMigrations) to learn how to configure
+    /// this for a specific migration.
     fn revert_migration(
         &mut self,
         migration: &dyn Migration<DB>,

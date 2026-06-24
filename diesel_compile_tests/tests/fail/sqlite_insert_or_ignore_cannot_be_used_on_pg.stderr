@@ -1,18 +1,24 @@
 error[E0277]: `diesel::query_builder::insert_statement::private::InsertOrIgnore` is no valid SQL fragment for the `Pg` backend
     --> tests/fail/sqlite_insert_or_ignore_cannot_be_used_on_pg.rs:21:18
      |
-21   |         .execute(&mut connection)
-     |          ------- ^^^^^^^^^^^^^^^ the trait `QueryFragment<Pg>` is not implemented for `diesel::query_builder::insert_statement::private::InsertOrIgnore`
+  LL |         .execute(&mut connection)
+     |          ------- ^^^^^^^^^^^^^^^ unsatisfied trait bound
      |          |
      |          required by a bound introduced by this call
      |
+     = help: the trait `QueryFragment<Pg>` is not implemented for `diesel::query_builder::insert_statement::private::InsertOrIgnore`
      = note: this usually means that the `Pg` database system does not support 
              this SQL syntax
-     = help: the following other types implement trait `QueryFragment<DB, SP>`:
-               `diesel::query_builder::insert_statement::private::InsertOrIgnore` implements `QueryFragment<Mysql>`
-               `diesel::query_builder::insert_statement::private::InsertOrIgnore` implements `QueryFragment<Sqlite>`
-     = note: required for `InsertStatement<table, ValuesClause<..., ...>, ...>` to implement `QueryFragment<Pg>`
-     = note: required for `InsertStatement<table, ValuesClause<..., ...>, ...>` to implement `ExecuteDsl<diesel::PgConnection, Pg>`
+help: `diesel::query_builder::insert_statement::private::InsertOrIgnore` implements trait `QueryFragment<DB, SP>`
+    --> DIESEL/diesel/diesel/src/query_builder/insert_statement/mod.rs
+     |
+ LL |     impl QueryFragment<crate::sqlite::Sqlite> for InsertOrIgnore {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `QueryFragment<Sqlite>`
+...
+ LL |     impl QueryFragment<crate::mysql::Mysql> for InsertOrIgnore {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `QueryFragment<Mysql>`
+     = note: required for `InsertStatement<table, ..., ...>` to implement `QueryFragment<Pg>`
+     = note: required for `InsertStatement<table, ..., ...>` to implement `ExecuteDsl<diesel::PgConnection, Pg>`
 note: required by a bound in `diesel::RunQueryDsl::execute`
     --> DIESEL/diesel/diesel/src/query_dsl/mod.rs
      |

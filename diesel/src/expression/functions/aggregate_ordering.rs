@@ -142,11 +142,14 @@ extern "SQL" {
     #[window]
     fn min<ST: SqlOrdAggregate>(expr: ST) -> ST::Ret;
 }
-/// TODO: avoid needing this public: should be possible once windowing functions are available
+/// Public so downstream crates can bound on `SqlOrdAggregate` when wrapping
+/// `max`/`min` in custom aggregate combinators (see the `count` module).
 pub mod private {
     use crate::sql_types::{IntoNullable, SingleValue, SqlOrd, SqlType};
-    /// TODO: avoid needing this public: should be possible once windowing functions are available
+    /// The set of SQL types accepted by the `max`/`min` aggregates. Public so
+    /// downstream crates can use it as a generic bound on those aggregates.
     pub trait SqlOrdAggregate: SingleValue {
+        /// The SQL type produced by this aggregate.
         type Ret: SqlType + SingleValue;
     }
 

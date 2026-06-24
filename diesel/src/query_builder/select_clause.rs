@@ -59,6 +59,7 @@ where
 }
 
 #[derive(Debug, Clone, Copy, QueryId)]
+#[doc(hidden)]
 pub struct SelectClause<T>(pub T);
 
 /// Specialised variant of `Expression` for select clause types

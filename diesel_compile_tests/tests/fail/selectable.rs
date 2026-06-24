@@ -58,7 +58,7 @@ struct PostWithWrongField {
 #[derive(Selectable)]
 // wrong table name here
 #[diesel(table_name = post)]
-//~^ ERROR: failed to resolve: use of unresolved module or unlinked crate `post`
+//~^ ERROR: cannot find module or crate `post` in this scope
 struct PostWithWrongTableName {
     id: i32,
     title: String,
@@ -128,13 +128,6 @@ fn main() {
         .load(&mut conn)
         .unwrap();
 
-    // full joins require both optional
-    let _ = users::table
-        .full_join(posts::table)
-        .select((users::id.nullable(), posts::id.nullable()))
-        .load(&mut conn)
-        .unwrap();
-
     // allow manual impls with complex expressions
     // (and group by)
     let _ = users::table
@@ -179,34 +172,13 @@ fn main() {
         //~| ERROR: cannot select `posts::columns::title` from `users::table`
         .unwrap();
 
-    // full joins force nullable on both
-    let _ = users::table
-        .full_join(posts::table)
-        .select((users::id, posts::id))
-        .load(&mut conn)
-        .unwrap();
-
-    // full joins force nullable on left
-    let _ = users::table
-        .full_join(posts::table)
-        .select((users::id, posts::id.nullable()))
-        .load(&mut conn)
-        .unwrap();
-
-    // full joins force nullable on right
-    let _ = users::table
-        .full_join(posts::table)
-        .select((users::id.nullable(), posts::id))
-        .load(&mut conn)
-        .unwrap();
-
     // group by clauses are considered
     let _ = users::table
         .inner_join(posts::table)
         .group_by(posts::id)
         .select(UserWithEmbeddedPost::as_select())
-        //~^ ERROR: the trait bound `posts::columns::id: IsContainedInGroupBy<users::columns::id>` is not satisfied
-        //~| ERROR: the trait bound `posts::columns::id: IsContainedInGroupBy<users::columns::name>` is not satisfied
+        //~^ ERROR: the trait bound `id: IsContainedInGroupBy<id>` is not satisfied
+        //~| ERROR: the trait bound `id: IsContainedInGroupBy<name>` is not satisfied
         .load(&mut conn)
         .unwrap();
 
@@ -283,14 +255,14 @@ fn main() {
     let _ = posts::table
         .select((Post::as_select(), posts::title))
         .load::<((i32, String), String)>(&mut conn)
-        //~^ ERROR: the trait bound `(SelectBy<Post, _>, Text): CompatibleType<((i32, String), String), _>` is not satisfied
+        //~^ ERROR: the trait bound `(SelectBy<Post, _>, Text): CompatibleType<..., _>` is not satisfied
         .unwrap();
     let _ = diesel::insert_into(posts::table)
         .values(posts::title.eq(""))
         .returning(Post::as_select())
         .load::<(i32, String, i32)>(&mut conn)
         //~^ ERROR: the trait bound `diesel::expression::select_by::SelectBy<Post, _>: SingleValue` is not satisfied
-        //~| ERROR: the trait bound `(i32, String, i32): Queryable<SelectBy<Post, _>, _>` is not satisfied
+        //~| ERROR: the trait bound `(i32, String, i32): Queryable<SelectBy<..., _>, _>` is not satisfied
         .unwrap();
 
     // cannot use backend specific selectable with other backend

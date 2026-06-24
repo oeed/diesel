@@ -40,17 +40,17 @@ fn invalid_inner_joins() {
     // This fails, because we join the same table more than once
     let _ = users::table.inner_join(posts::table.inner_join(users::table));
     //~^ ERROR: type mismatch resolving `<Once as Plus<Once>>::Output == Once`
-    //~| ERROR: type mismatch resolving `<Join<table, ..., ...> as AppearsInFromClause<...>>::Count == Once`
+    //~| ERROR: type mismatch resolving `<Join<..., ..., ...> as AppearsInFromClause<...>>::Count == Once`
 
     // It also fails if we use an explicit on clause
     let _ = users::table
         .inner_join(posts::table.inner_join(users::table.on(posts::user_id.eq(users::id))));
     //~^ ERROR: type mismatch resolving `<Once as Plus<Once>>::Output == Once`
-    //~| ERROR: type mismatch resolving `<Join<table, ..., ...> as AppearsInFromClause<...>>::Count == Once`
+    //~| ERROR: type mismatch resolving `<Join<..., ..., ...> as AppearsInFromClause<...>>::Count == Once`
 
     // Also if we put the on clause on the first join
     let _ = users::table.inner_join(
-        //~^ ERROR: type mismatch resolving `<Join<table, ..., ...> as AppearsInFromClause<...>>::Count == Once`
+        //~^ ERROR: type mismatch resolving `<Join<..., ..., ...> as AppearsInFromClause<...>>::Count == Once`
         posts::table
             .on(users::id.eq(posts::user_id))
             .inner_join(users::table),
@@ -71,17 +71,17 @@ fn invalid_left_joins() {
     // This fails, because we join the same table more than once
     let _ = users::table.left_join(posts::table.left_join(users::table));
     //~^ ERROR: type mismatch resolving `<Once as Plus<Once>>::Output == Once`
-    //~| ERROR: type mismatch resolving `<Join<table, ..., ...> as AppearsInFromClause<...>>::Count == Once`
+    //~| ERROR: type mismatch resolving `<Join<..., ..., ...> as AppearsInFromClause<...>>::Count == Once`
 
     // It also fails if we use an explicit on clause
     let _ = users::table
         .left_join(posts::table.left_join(users::table.on(posts::user_id.eq(users::id))));
     //~^ ERROR: type mismatch resolving `<Once as Plus<Once>>::Output == Once`
-    //~| ERROR: type mismatch resolving `<Join<table, ..., ...> as AppearsInFromClause<...>>::Count == Once`
+    //~| ERROR: type mismatch resolving `<Join<..., ..., ...> as AppearsInFromClause<...>>::Count == Once`
 
     // Also if we put the on clause on the first join
     let _ = users::table.left_join(
-        //~^ ERROR: type mismatch resolving `<Join<table, ..., ...> as AppearsInFromClause<...>>::Count == Once`
+        //~^ ERROR: type mismatch resolving `<Join<..., ..., ...> as AppearsInFromClause<...>>::Count == Once`
         posts::table
             .on(users::id.eq(posts::user_id))
             .left_join(users::table),
@@ -93,21 +93,4 @@ fn invalid_left_joins() {
         .left_join(comments::table)
         .left_join(posts::table.left_join(comments::table));
     //~^ ERROR: type mismatch resolving `<Once as Plus<Once>>::Output == Once`
-}
-
-fn invalid_full_joins() {
-  // This is a valid join
-  let _ = users::table.full_join(posts::table);
-
-  // This fails, because we join the same table more than once
-  let _ = users::table.full_join(posts::table.full_join(users::table));
-
-  // It also fails if we use an explicit on clause
-  let _ = users::table.full_join(posts::table.full_join(users::table.on(posts::user_id.eq(users::id))));
-
-  // Also if we put the on clause on the first join
-  let _ = users::table.full_join(posts::table.on(users::id.eq(posts::user_id)).full_join(users::table));
-
-  // it also fails if we join to another subjoin
-  let _ = users::table.full_join(comments::table).full_join(posts::table.full_join(comments::table));
 }

@@ -23,6 +23,7 @@ fn write_post() {
                 + EOF
                 + " when finished)\n\n\nSaved draft Test Title\n",
         );
+
     let _ = Command::cargo_bin("show_posts")
         .unwrap()
         .env("SQLITE_DATABASE_URL", &db_url)

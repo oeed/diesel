@@ -42,7 +42,7 @@ fn main() {
         .on_conflict(id)
         .do_update()
         .execute(&mut connection);
-    //~^ ERROR: the method `execute` exists for struct `IncompleteDoUpdate<InsertStatement<table, ...>, ...>`, but its trait bounds were not satisfied
+    //~^ ERROR: the method `execute` exists for struct `IncompleteDoUpdate<InsertStatement<..., ...>, ...>`, but its trait bounds were not satisfied
 
     // Update column from other table
     insert_into(users)
@@ -50,7 +50,7 @@ fn main() {
         .on_conflict(id)
         .do_update()
         .set(posts::title.eq("Sean"));
-    //~^ ERROR: type mismatch resolving `<Grouped<Eq<title, Bound<Text, &str>>> as AsChangeset>::Target == table`
+    //~^ ERROR: type mismatch resolving `<Grouped<...> as AsChangeset>::Target == table`
 
     // Update column with value that is not selectable
     insert_into(users)
@@ -74,7 +74,7 @@ fn main() {
         .on_conflict(id)
         .do_update()
         .set(name.eq(excluded(id)));
-    //~^ ERROR: type mismatch resolving `<Excluded<id> as Expression>::SqlType == Text`
+    //~^ ERROR: the trait bound `Excluded<id>: AsExpression<Text>` is not satisfied
 
     // Excluded is only valid in upsert
     // FIXME: This should not compile

@@ -25,7 +25,11 @@ pub mod array_comparison;
 pub(crate) mod assume_not_null;
 pub(crate) mod bound;
 mod coerce;
-/// TODO: avoid needing this public: should be possible once windowing functions are available
+/// Public so downstream crates can name the `count` aggregate type as a generic
+/// bound. Required by custom `FILTER (WHERE …)` aggregate combinators that wrap
+/// composite aggregate expressions (e.g. `count(a) + count(b)`); the native
+/// `AggregateExpressionMethods::aggregate_filter` only applies to single named
+/// functions, so it cannot replace them.
 pub mod count;
 #[cfg(not(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))]
 pub(crate) mod exists;
@@ -51,6 +55,7 @@ pub use self::operators::Concat;
 // for every item in this module. We reexport
 // everything from `crate::helper_types::`
 #[allow(non_camel_case_types, unreachable_pub)]
+#[doc(hidden)]
 pub mod dsl {
     use crate::dsl::SqlTypeOf;
 
@@ -68,8 +73,6 @@ pub mod dsl {
     pub use super::functions::date_and_time::*;
     #[doc(inline)]
     pub use super::functions::window_functions::*;
-    #[doc(inline)]
-    pub use super::helper_types::{case_when, IntoSql, Otherwise, When};
     #[doc(inline)]
     pub use super::not::not;
     #[doc(inline)]
@@ -243,6 +246,7 @@ where
 #[doc(inline)]
 pub use diesel_derives::AsExpression;
 
+#[diagnostic::do_not_recommend]
 impl<T, ST> AsExpression<ST> for T
 where
     T: Expression<SqlType = ST>,

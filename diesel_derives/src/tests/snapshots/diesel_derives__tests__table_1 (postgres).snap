@@ -700,6 +700,34 @@ pub mod users {
                 )
             }
         }
+        impl<
+            Left,
+            Right,
+        > diesel::SelectableExpression<
+            diesel::internal::table_macro::Join<
+                Left,
+                Right,
+                diesel::internal::table_macro::FullOuter,
+            >,
+        > for id
+        where
+            id: diesel::AppearsOnTable<
+                diesel::internal::table_macro::Join<
+                    Left,
+                    Right,
+                    diesel::internal::table_macro::FullOuter,
+                >,
+            >,
+            Self: diesel::SelectableExpression<Left>,
+            Left: diesel::query_source::AppearsInFromClause<
+                    super::table,
+                    Count = diesel::query_source::Never,
+                > + diesel::query_source::QuerySource,
+            Right: diesel::query_source::AppearsInFromClause<
+                    super::table,
+                    Count = diesel::query_source::Never,
+                > + diesel::query_source::QuerySource,
+        {}
         impl diesel::query_source::AppearsInFromClause<
             diesel::query_builder::Only<super::table>,
         > for id {
@@ -879,6 +907,34 @@ pub mod users {
                 self.eq(__diesel_internal_rhs)
             }
         }
+        impl<
+            Left,
+            Right,
+        > diesel::SelectableExpression<
+            diesel::internal::table_macro::Join<
+                Left,
+                Right,
+                diesel::internal::table_macro::FullOuter,
+            >,
+        > for name
+        where
+            name: diesel::AppearsOnTable<
+                diesel::internal::table_macro::Join<
+                    Left,
+                    Right,
+                    diesel::internal::table_macro::FullOuter,
+                >,
+            >,
+            Self: diesel::SelectableExpression<Left>,
+            Left: diesel::query_source::AppearsInFromClause<
+                    super::table,
+                    Count = diesel::query_source::Never,
+                > + diesel::query_source::QuerySource,
+            Right: diesel::query_source::AppearsInFromClause<
+                    super::table,
+                    Count = diesel::query_source::Never,
+                > + diesel::query_source::QuerySource,
+        {}
         impl diesel::query_source::AppearsInFromClause<
             diesel::query_builder::Only<super::table>,
         > for name {

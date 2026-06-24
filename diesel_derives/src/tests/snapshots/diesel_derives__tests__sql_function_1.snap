@@ -15,7 +15,7 @@ where
 }
 #[doc(hidden)]
 #[allow(non_camel_case_types, non_snake_case, unused_imports)]
-pub(crate) mod lower {
+pub mod lower {
     use diesel::{self, QueryResult};
     use diesel::expression::{
         AsExpression, Expression, SelectableExpression, AppearsOnTable, ValidGrouping,
@@ -29,7 +29,7 @@ pub(crate) mod lower {
     pub struct lower<input> {
         pub(super) input: input,
     }
-    ///The return type of [`lower()`](super::fn_name)
+    ///The return type of [`lower()`](fn@lower)
     pub type HelperType<input> = lower<<input as AsExpression<Text>>::Expression>;
     impl<input> Expression for lower<input>
     where

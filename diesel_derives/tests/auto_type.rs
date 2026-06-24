@@ -38,13 +38,6 @@ table! {
     }
 }
 
-table! {
-    posts4 {
-        id -> Integer,
-        user_id -> Integer,
-    }
-}
-
 #[cfg(feature = "postgres")]
 table! {
     pg_extras(id) {
@@ -79,8 +72,7 @@ table! {
 joinable!(posts -> users(user_id));
 joinable!(posts2 -> users(user_id));
 joinable!(posts3 -> users(user_id));
-joinable!(posts4 -> users(user_id));
-allow_tables_to_appear_in_same_query!(users, posts, posts2, posts3, posts4);
+allow_tables_to_appear_in_same_query!(users, posts, posts2, posts3);
 
 #[auto_type]
 fn test_all_query_dsl() -> _ {
@@ -100,8 +92,6 @@ fn test_all_query_dsl() -> _ {
         .inner_join(posts::table)
         .left_join(posts2::table)
         .inner_join(posts3::table.on(users::id.eq(posts3::user_id)))
-        .select(users::id.nullable())
-        .full_join(posts4::table)
     //.into_boxed()
 }
 
@@ -526,6 +516,8 @@ fn sqlite_functions() -> _ {
         json_type(sqlite_extras::json),
         json_type_with_path(sqlite_extras::json, sqlite_extras::text),
         json_quote(sqlite_extras::json),
+        json_patch(sqlite_extras::json, sqlite_extras::json),
+        jsonb_patch(sqlite_extras::jsonb, sqlite_extras::jsonb),
     )
 }
 
