@@ -249,7 +249,7 @@ where
 
 use crate::dsl::Filter;
 use crate::expression_methods::EqAll;
-use crate::query_builder::having_clause::{HavingClause, NoHavingClause};
+use crate::query_builder::having_clause::NoHavingClause;
 use crate::query_source::Table;
 
 impl<F, S, D, W, O, LOf, G, H, LC, PK> FindDsl<PK>

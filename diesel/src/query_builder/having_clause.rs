@@ -106,7 +106,8 @@ where
 
 /// Marker trait indicating that a `HAVING` clause is valid for a given query
 /// source.
-pub trait ValidHavingClause<QS> {}
+#[allow(dead_code)]
+pub(crate) trait ValidHavingClause<QS> {}
 
 impl<QS> ValidHavingClause<QS> for NoHavingClause {}
 

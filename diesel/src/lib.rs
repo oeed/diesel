@@ -126,12 +126,12 @@
 //!   (for example, `returning_clauses_for_sqlite_3_35` for enabling support for returning clauses in newer
 //!   sqlite versions)
 //! * `the trait bound posts::title: SelectableExpression<users::table> is not satisfied` while
-//!    executing a query:
-//!    This error message indicates that you're trying to select a field from a table
-//!    that does not appear in your from clause. If your query joins the relevant table via
-//!    [`left_join`](crate::query_dsl::QueryDsl::left_join) or [`full_join`](crate::query_dsl::QueryDsl::full_join) you need to call
-//!    [`.nullable()`](crate::expression_methods::NullableExpressionMethods::nullable)
-//!    on the relevant column in your select clause.
+//!   executing a query:
+//!   This error message indicates that you're trying to select a field from a table
+//!   that does not appear in your from clause. If your query joins the relevant table via
+//!   [`left_join`](crate::query_dsl::QueryDsl::left_join) or [`full_join`](crate::query_dsl::QueryDsl::full_join) you need to call
+//!   [`.nullable()`](crate::expression_methods::NullableExpressionMethods::nullable)
+//!   on the relevant column in your select clause.
 //!
 //!
 //! ## Getting help

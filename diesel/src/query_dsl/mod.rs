@@ -648,7 +648,7 @@ pub trait QueryDsl: Sized {
     }
 
     /// Join two tables using a SQL `FULL OUTER JOIN`.
-    /// 
+    ///
     /// This is only supported on PostgreSQL and SQLite.
     ///
     /// Behaves similarly to [`inner_join`] and [`left_join`], but will produce a full join

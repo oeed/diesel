@@ -147,6 +147,7 @@ pub mod private {
     use crate::sql_types::{IntoNullable, SingleValue, SqlOrd, SqlType};
     /// TODO: avoid needing this public: should be possible once windowing functions are available
     pub trait SqlOrdAggregate: SingleValue {
+        /// The SQL type produced by this aggregate.
         type Ret: SqlType + SingleValue;
     }
 
