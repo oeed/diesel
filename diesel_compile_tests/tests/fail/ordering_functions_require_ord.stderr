@@ -1,4 +1,4 @@
-error[E0277]: the trait bound `Bool: SqlOrdAggregate` is not satisfied
+error[E0277]: the trait bound `diesel::sql_types::Bool: SqlOrdAggregate` is not satisfied
   --> tests/fail/ordering_functions_require_ord.rs:13:38
    |
 LL |     let source = stuff::table.select(max(stuff::b));
@@ -21,7 +21,6 @@ note: required by a bound in `diesel::dsl::max`
 LL |     fn max<ST: SqlOrdAggregate>(expr: ST) -> ST::Ret;
    |                ^^^^^^^^^^^^^^^ required by this bound in `max`
 
-   
 error[E0277]: expressions of the type `diesel::sql_types::Bool` cannot be ordered by the database
   --> tests/fail/ordering_functions_require_ord.rs:13:31
    |
@@ -39,11 +38,11 @@ LL |     let source = stuff::table.select(max(stuff::b));
              Unsigned<diesel::sql_types::SmallInt>
            and N others
    = note: required for `diesel::sql_types::Bool` to implement `SqlOrdAggregate`
-   = note: required for `max<Bool, b>` to implement `Expression`
+   = note: required for `diesel::dsl::max_utils::max<diesel::sql_types::Bool, columns::b>` to implement `Expression`
    = note: required for `stuff::table` to implement `SelectDsl<max<Bool, b>>`
 
    
-error[E0277]: the trait bound `Bool: SqlOrdAggregate` is not satisfied
+error[E0277]: the trait bound `diesel::sql_types::Bool: SqlOrdAggregate` is not satisfied
    --> tests/fail/ordering_functions_require_ord.rs:16:38
     |
  LL |     let source = stuff::table.select(min(stuff::b));
@@ -65,8 +64,7 @@ note: required by a bound in `diesel::dsl::min`
     |
 LL |     fn min<ST: SqlOrdAggregate>(expr: ST) -> ST::Ret;
     |                ^^^^^^^^^^^^^^^ required by this bound in `min`
- 
-    
+
 error[E0277]: expressions of the type `diesel::sql_types::Bool` cannot be ordered by the database
   --> tests/fail/ordering_functions_require_ord.rs:16:31
    |
@@ -84,7 +82,7 @@ LL |     let source = stuff::table.select(min(stuff::b));
              Unsigned<diesel::sql_types::SmallInt>
            and N others
    = note: required for `diesel::sql_types::Bool` to implement `SqlOrdAggregate`
-   = note: required for `min<Bool, b>` to implement `Expression`
+   = note: required for `diesel::dsl::min_utils::min<diesel::sql_types::Bool, columns::b>` to implement `Expression`
    = note: required for `stuff::table` to implement `SelectDsl<min<Bool, b>>`
 
    For more information about this error, try `rustc --explain E0277`.

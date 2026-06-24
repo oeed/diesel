@@ -29,15 +29,14 @@ LL |         Self: methods::SelectDsl<Selection>,
     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `QueryDsl::select`
  
     
-error[E0277]: the trait bound `rank: ValidGrouping<()>` is not satisfied
+error[E0277]: the trait bound `diesel::dsl::rank_utils::rank: ValidGrouping<()>` is not satisfied
    --> tests/fail/window_function_can_only_be_called_with_window_expression_applied.rs:18:25
     |
  LL |     users::table.select(rank());
-    |                  ------ ^^^^^^ unsatisfied trait bound
+    |                  ------ ^^^^^^ the trait `ValidGrouping<()>` is not implemented for `diesel::dsl::rank_utils::rank`
     |                  |
     |                  required by a bound introduced by this call
     |
-    = help: the trait `ValidGrouping<()>` is not implemented for `diesel::expression::functions::window_functions::rank_utils::rank`
     = help: the following other types implement trait `ValidGrouping<GroupByClause>`:
               AliasedField<S, C>
               columns::id
@@ -48,9 +47,9 @@ error[E0277]: the trait bound `rank: ValidGrouping<()>` is not satisfied
               pg::metadata_lookup::pg_type::columns::typarray
               pg::metadata_lookup::pg_type::columns::typname
             and N others
-    = note: required for `SelectStatement<FromClause<table>>` to implement `SelectDsl<rank>`
+    = note: required for `SelectStatement<FromClause<table>>` to implement `SelectDsl<diesel::dsl::rank_utils::rank>`
     = note: 1 redundant requirement hidden
-    = note: required for `users::table` to implement `SelectDsl<rank>`
+    = note: required for `users::table` to implement `SelectDsl<diesel::dsl::rank_utils::rank>`
 note: required by a bound in `diesel::QueryDsl::select`
    --> DIESEL/diesel/diesel/src/query_dsl/mod.rs
     |

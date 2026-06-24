@@ -17,6 +17,7 @@ help: the trait `SelectableExpression<users::table>` is not implemented for `non
               SelectableExpression<Tablesample<non_users::table, TSM>>
               SelectableExpression<SelectStatement<...>>
               SelectableExpression<non_users::table>
+              SelectableExpression<Join<Left, Right, FullOuter>>
               SelectableExpression<Join<Left, Right, Inner>>
               SelectableExpression<Join<Left, Right, LeftOuter>>
               SelectableExpression<query_source::joins::JoinOn<Join, On>>
@@ -50,6 +51,7 @@ help: the trait `SelectableExpression<users::table>` is not implemented for `non
               SelectableExpression<Tablesample<non_users::table, TSM>>
               SelectableExpression<SelectStatement<...>>
               SelectableExpression<non_users::table>
+              SelectableExpression<Join<Left, Right, FullOuter>>
               SelectableExpression<Join<Left, Right, Inner>>
               SelectableExpression<Join<Left, Right, LeftOuter>>
               SelectableExpression<query_source::joins::JoinOn<Join, On>>
@@ -84,6 +86,7 @@ help: the trait `SelectableExpression<users::table>` is not implemented for `non
               SelectableExpression<Tablesample<non_users::table, TSM>>
               SelectableExpression<SelectStatement<...>>
               SelectableExpression<non_users::table>
+              SelectableExpression<Join<Left, Right, FullOuter>>
               SelectableExpression<Join<Left, Right, Inner>>
               SelectableExpression<Join<Left, Right, LeftOuter>>
               SelectableExpression<query_source::joins::JoinOn<Join, On>>

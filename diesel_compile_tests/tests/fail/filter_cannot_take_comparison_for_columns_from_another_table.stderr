@@ -64,8 +64,8 @@ LL | | where
 LL | |     Self: AsQuery,
 ...   |
 LL | |     G: ValidGroupByClause + QueryFragment<DB> + Send + 'a,
-LL | |     H: QueryFragment<DB> + Send + 'a,
-    | |_____________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
+LL | |     H: Into<BoxedHavingClause<'a, DB>> + Send + 'a,
+    | |___________________________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
 ...
 LL | / impl<'a, S, D, W, O, LOf, G, H, DB> BoxedDsl<'a, DB>
 LL | |     for SelectStatement<NoFromClause, S, D, W, O, LOf, G, H>
@@ -73,8 +73,8 @@ LL | | where
 LL | |     Self: AsQuery,
 ...   |
 LL | |     G: ValidGroupByClause + QueryFragment<DB> + Send + 'a,
-LL | |     H: QueryFragment<DB> + Send + 'a,
-    | |_____________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
+LL | |     H: Into<BoxedHavingClause<'a, DB>> + Send + 'a,
+    | |___________________________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
  
     
 error[E0271]: type mismatch resolving `<table as AppearsInFromClause<table>>::Count == Once`
@@ -143,8 +143,8 @@ LL | | where
 LL | |     Self: AsQuery,
 ...   |
 LL | |     G: ValidGroupByClause + QueryFragment<DB> + Send + 'a,
-LL | |     H: QueryFragment<DB> + Send + 'a,
-    | |_____________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
+LL | |     H: Into<BoxedHavingClause<'a, DB>> + Send + 'a,
+    | |___________________________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
 ...
 LL | / impl<'a, S, D, W, O, LOf, G, H, DB> BoxedDsl<'a, DB>
 LL | |     for SelectStatement<NoFromClause, S, D, W, O, LOf, G, H>
@@ -152,5 +152,5 @@ LL | | where
 LL | |     Self: AsQuery,
 ...   |
 LL | |     G: ValidGroupByClause + QueryFragment<DB> + Send + 'a,
-LL | |     H: QueryFragment<DB> + Send + 'a,
-    | |_____________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
+LL | |     H: Into<BoxedHavingClause<'a, DB>> + Send + 'a,
+    | |___________________________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`

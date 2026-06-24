@@ -17,6 +17,7 @@ help: the trait `SelectableExpression<users::table>` is not implemented for `pos
               SelectableExpression<Tablesample<posts::table, TSM>>
               SelectableExpression<SelectStatement<...>>
               SelectableExpression<posts::table>
+              SelectableExpression<Join<Left, Right, FullOuter>>
               SelectableExpression<Join<Left, Right, Inner>>
               SelectableExpression<Join<Left, Right, LeftOuter>>
               SelectableExpression<query_source::joins::JoinOn<Join, On>>

@@ -15,6 +15,7 @@ LL |         id -> Integer,
              SelectableExpression<Tablesample<posts::table, TSM>>
              SelectableExpression<SelectStatement<...>>
              SelectableExpression<posts::table>
+             SelectableExpression<Join<Left, Right, FullOuter>>
              SelectableExpression<Join<Left, Right, Inner>>
              SelectableExpression<Join<Left, Right, LeftOuter>>
              SelectableExpression<query_source::joins::JoinOn<Join, On>>
@@ -59,6 +60,7 @@ LL |         id -> Integer,
              SelectableExpression<Tablesample<posts::table, TSM>>
              SelectableExpression<SelectStatement<...>>
              SelectableExpression<posts::table>
+             SelectableExpression<Join<Left, Right, FullOuter>>
              SelectableExpression<Join<Left, Right, Inner>>
              SelectableExpression<Join<Left, Right, LeftOuter>>
              SelectableExpression<query_source::joins::JoinOn<Join, On>>
@@ -103,6 +105,7 @@ LL |         id -> Integer,
              SelectableExpression<Tablesample<posts::table, TSM>>
              SelectableExpression<SelectStatement<...>>
              SelectableExpression<posts::table>
+             SelectableExpression<Join<Left, Right, FullOuter>>
              SelectableExpression<Join<Left, Right, Inner>>
              SelectableExpression<Join<Left, Right, LeftOuter>>
              SelectableExpression<query_source::joins::JoinOn<Join, On>>
@@ -147,6 +150,7 @@ LL |         id -> Integer,
              SelectableExpression<Tablesample<posts::table, TSM>>
              SelectableExpression<SelectStatement<...>>
              SelectableExpression<posts::table>
+             SelectableExpression<Join<Left, Right, FullOuter>>
              SelectableExpression<Join<Left, Right, Inner>>
              SelectableExpression<Join<Left, Right, LeftOuter>>
              SelectableExpression<query_source::joins::JoinOn<Join, On>>

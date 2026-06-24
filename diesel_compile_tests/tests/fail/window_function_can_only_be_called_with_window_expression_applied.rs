@@ -16,5 +16,5 @@ fn main() {
     //~^ ERROR: the trait bound `lag<Text, name>: ValidGrouping<()>` is not satisfied
 
     users::table.select(rank());
-    //~^ ERROR: the trait bound `rank: ValidGrouping<()>` is not satisfied
+    //~^ ERROR: the trait bound `diesel::dsl::rank_utils::rank: ValidGrouping<()>` is not satisfied
 }

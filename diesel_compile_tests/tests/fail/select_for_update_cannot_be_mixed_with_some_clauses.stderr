@@ -57,7 +57,7 @@ error[E0277]: the trait bound `SelectStatement<..., ..., ...>: LockingDsl<...>` 
     |                      ^^^^^^^^^^ unsatisfied trait bound
     |
     = note: a `LOCKING` clause is incompatible with various other clauses like a `DISTINCT` clause
-help: the trait `LockingDsl<diesel::query_builder::locking_clause::ForUpdate>` is not implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, diesel::query_builder::distinct_clause::DistinctClause, diesel::query_builder::where_clause::NoWhereClause, diesel::query_builder::order_clause::NoOrderClause, diesel::query_builder::limit_offset_clause::LimitOffsetClause<diesel::query_builder::limit_clause::NoLimitClause, diesel::query_builder::offset_clause::NoOffsetClause>, _, _, _>`
+help: the trait `LockingDsl<diesel::query_builder::locking_clause::ForUpdate>` is not implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, diesel::query_builder::distinct_clause::DistinctClause, NoWhereClause, diesel::query_builder::order_clause::NoOrderClause, diesel::query_builder::limit_offset_clause::LimitOffsetClause<diesel::query_builder::limit_clause::NoLimitClause, diesel::query_builder::offset_clause::NoOffsetClause>, _, _, _>`
       but it is implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, diesel::query_builder::distinct_clause::NoDistinctClause, _, _, _, _, _, _>`
    --> DIESEL/diesel/diesel/src/query_builder/select_statement/dsl_impls.rs
     |
@@ -73,7 +73,7 @@ error[E0277]: the trait bound `SelectStatement<FromClause<...>, ..., ...>: Table
  LL |     users.distinct().for_update();
     |                      ^^^^^^^^^^ unsatisfied trait bound
     |
-help: the trait `LockingDsl<diesel::query_builder::locking_clause::ForUpdate>` is not implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, diesel::query_builder::distinct_clause::DistinctClause, diesel::query_builder::where_clause::NoWhereClause, diesel::query_builder::order_clause::NoOrderClause, diesel::query_builder::limit_offset_clause::LimitOffsetClause<diesel::query_builder::limit_clause::NoLimitClause, diesel::query_builder::offset_clause::NoOffsetClause>, _, _, _>`
+help: the trait `LockingDsl<diesel::query_builder::locking_clause::ForUpdate>` is not implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, diesel::query_builder::distinct_clause::DistinctClause, NoWhereClause, diesel::query_builder::order_clause::NoOrderClause, diesel::query_builder::limit_offset_clause::LimitOffsetClause<diesel::query_builder::limit_clause::NoLimitClause, diesel::query_builder::offset_clause::NoOffsetClause>, _, _, _>`
       but it is implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, diesel::query_builder::distinct_clause::NoDistinctClause, _, _, _, _, _, _>`
    --> DIESEL/diesel/diesel/src/query_builder/select_statement/dsl_impls.rs
     |
@@ -212,7 +212,7 @@ error[E0277]: the trait bound `SelectStatement<..., ..., ...>: LockingDsl<...>` 
     |                           ^^^^^^^^^^ unsatisfied trait bound
     |
     = note: a `LOCKING` clause is incompatible with various other clauses like a `DISTINCT` clause
-help: the trait `LockingDsl<diesel::query_builder::locking_clause::ForUpdate>` is not implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, DistinctOnClause<columns::id>, diesel::query_builder::where_clause::NoWhereClause, diesel::query_builder::order_clause::NoOrderClause, diesel::query_builder::limit_offset_clause::LimitOffsetClause<diesel::query_builder::limit_clause::NoLimitClause, diesel::query_builder::offset_clause::NoOffsetClause>, _, _, _>`
+help: the trait `LockingDsl<diesel::query_builder::locking_clause::ForUpdate>` is not implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, DistinctOnClause<columns::id>, NoWhereClause, diesel::query_builder::order_clause::NoOrderClause, diesel::query_builder::limit_offset_clause::LimitOffsetClause<diesel::query_builder::limit_clause::NoLimitClause, diesel::query_builder::offset_clause::NoOffsetClause>, _, _, _>`
       but it is implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, diesel::query_builder::distinct_clause::NoDistinctClause, _, _, _, _, _, _>`
    --> DIESEL/diesel/diesel/src/query_builder/select_statement/dsl_impls.rs
     |
@@ -228,7 +228,7 @@ error[E0277]: the trait bound `SelectStatement<FromClause<...>, ..., ...>: Table
  LL |     users.distinct_on(id).for_update();
     |                           ^^^^^^^^^^ unsatisfied trait bound
     |
-help: the trait `LockingDsl<diesel::query_builder::locking_clause::ForUpdate>` is not implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, DistinctOnClause<columns::id>, diesel::query_builder::where_clause::NoWhereClause, diesel::query_builder::order_clause::NoOrderClause, diesel::query_builder::limit_offset_clause::LimitOffsetClause<diesel::query_builder::limit_clause::NoLimitClause, diesel::query_builder::offset_clause::NoOffsetClause>, _, _, _>`
+help: the trait `LockingDsl<diesel::query_builder::locking_clause::ForUpdate>` is not implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, DistinctOnClause<columns::id>, NoWhereClause, diesel::query_builder::order_clause::NoOrderClause, diesel::query_builder::limit_offset_clause::LimitOffsetClause<diesel::query_builder::limit_clause::NoLimitClause, diesel::query_builder::offset_clause::NoOffsetClause>, _, _, _>`
       but it is implemented for `diesel::query_builder::select_statement::SelectStatement<_, _, diesel::query_builder::distinct_clause::NoDistinctClause, _, _, _, _, _, _>`
    --> DIESEL/diesel/diesel/src/query_builder/select_statement/dsl_impls.rs
     |
@@ -440,8 +440,8 @@ LL | | where
 LL | |     Self: AsQuery,
 ...   |
 LL | |     G: ValidGroupByClause + QueryFragment<DB> + Send + 'a,
-LL | |     H: QueryFragment<DB> + Send + 'a,
-    | |_____________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
+LL | |     H: Into<BoxedHavingClause<'a, DB>> + Send + 'a,
+    | |___________________________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
 ...
 LL | / impl<'a, S, D, W, O, LOf, G, H, DB> BoxedDsl<'a, DB>
 LL | |     for SelectStatement<NoFromClause, S, D, W, O, LOf, G, H>
@@ -449,8 +449,8 @@ LL | | where
 LL | |     Self: AsQuery,
 ...   |
 LL | |     G: ValidGroupByClause + QueryFragment<DB> + Send + 'a,
-LL | |     H: QueryFragment<DB> + Send + 'a,
-    | |_____________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
+LL | |     H: Into<BoxedHavingClause<'a, DB>> + Send + 'a,
+    | |___________________________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
  
     
 error[E0277]: the trait bound `SelectStatement<..., ..., ..., ..., ..., ..., ..., ..., ...>: Table` is not satisfied
@@ -469,8 +469,8 @@ LL | | where
 LL | |     Self: AsQuery,
 ...   |
 LL | |     G: ValidGroupByClause + QueryFragment<DB> + Send + 'a,
-LL | |     H: QueryFragment<DB> + Send + 'a,
-    | |_____________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
+LL | |     H: Into<BoxedHavingClause<'a, DB>> + Send + 'a,
+    | |___________________________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
 ...
 LL | / impl<'a, S, D, W, O, LOf, G, H, DB> BoxedDsl<'a, DB>
 LL | |     for SelectStatement<NoFromClause, S, D, W, O, LOf, G, H>
@@ -478,8 +478,8 @@ LL | | where
 LL | |     Self: AsQuery,
 ...   |
 LL | |     G: ValidGroupByClause + QueryFragment<DB> + Send + 'a,
-LL | |     H: QueryFragment<DB> + Send + 'a,
-    | |_____________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
+LL | |     H: Into<BoxedHavingClause<'a, DB>> + Send + 'a,
+    | |___________________________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
  
     
 error[E0277]: cannot box `SelectStatement<..., ..., ..., ..., ..., ..., ..., ..., ...>` for backend `_`
@@ -500,8 +500,8 @@ help: the following other types implement trait `BoxedDsl<'a, DB>`
  LL | |     Self: AsQuery,
 ...    |
  LL | |     G: ValidGroupByClause + QueryFragment<DB> + Send + 'a,
- LL | |     H: QueryFragment<DB> + Send + 'a,
-     | |_____________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
+ LL | |     H: Into<BoxedHavingClause<'a, DB>> + Send + 'a,
+     | |___________________________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
 ...
  LL | / impl<'a, S, D, W, O, LOf, G, H, DB> BoxedDsl<'a, DB>
  LL | |     for SelectStatement<NoFromClause, S, D, W, O, LOf, G, H>
@@ -509,8 +509,8 @@ help: the following other types implement trait `BoxedDsl<'a, DB>`
  LL | |     Self: AsQuery,
 ...    |
  LL | |     G: ValidGroupByClause + QueryFragment<DB> + Send + 'a,
- LL | |     H: QueryFragment<DB> + Send + 'a,
-     | |_____________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
+ LL | |     H: Into<BoxedHavingClause<'a, DB>> + Send + 'a,
+     | |___________________________________________________^ `SelectStatement<..., ..., ..., ..., ..., ..., ..., ...>`
 note: required by a bound in `diesel::QueryDsl::into_boxed`
     --> DIESEL/diesel/diesel/src/query_dsl/mod.rs
      |
