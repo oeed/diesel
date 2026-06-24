@@ -674,11 +674,13 @@ pub mod helper_types {
     ///
     /// ```rust
     /// # include!("doctest_setup.rs");
-    /// use diesel::{dsl, helper_types::LeftJoinQuerySource};
-    /// # use diesel::{backend::Backend, serialize::ToSql, sql_types};
+    /// use diesel::{dsl, helper_types::FullJoinQuerySource};
+    /// # use diesel::sql_types;
     /// use schema::*;
     ///
-    /// # fn main() -> QueryResult<()> {
+    /// # fn main() { run_test().unwrap(); }
+    /// # #[cfg(any(feature = "postgres", feature = "sqlite"))]
+    /// # fn run_test() -> QueryResult<()> {
     /// #     let conn = &mut establish_connection();
     /// #
     /// // If you have an explicit join like this...
@@ -693,6 +695,8 @@ pub mod helper_types {
     /// #
     /// #     Ok(())
     /// # }
+    /// # #[cfg(not(any(feature = "postgres", feature = "sqlite")))]
+    /// # fn run_test() -> QueryResult<()> { Ok(()) }
     ///
     /// // ... you can use `FullJoinQuerySource` like this.
     /// type JoinConstraint = dsl::Eq<comments::columns::post_id, posts::columns::id>;

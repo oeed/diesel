@@ -667,42 +667,11 @@ pub trait QueryDsl: Sized {
     /// # include!("../doctest_setup.rs");
     /// # use schema::{users, posts};
     /// #
-    /// # #[derive(Queryable, PartialEq, Eq, Debug)]
-    /// # struct User {
-    /// #     id: i32,
-    /// #     name: String,
-    /// # }
-    /// #
-    /// # impl User {
-    /// #     fn new(id: i32, name: &str) -> Self {
-    /// #         User {
-    /// #             id,
-    /// #             name: name.into(),
-    /// #         }
-    /// #     }
-    /// # }
-    /// #
-    /// # #[derive(Queryable, PartialEq, Eq, Debug)]
-    /// # struct Post {
-    /// #     id: i32,
-    /// #     user_id: i32,
-    /// #     title: String,
-    /// # }
-    /// #
-    /// # impl Post {
-    /// #     fn new(id: i32, user_id: i32, title: &str) -> Self {
-    /// #         Post {
-    /// #             id,
-    /// #             user_id,
-    /// #             title: title.into(),
-    /// #         }
-    /// #     }
-    /// # }
-    /// #
     /// # fn main() {
     /// #     run_test().unwrap();
     /// # }
     /// #
+    /// # #[cfg(any(feature = "postgres", feature = "sqlite"))]
     /// # fn run_test() -> QueryResult<()> {
     /// #     let connection = &mut establish_connection();
     /// #     diesel::sql_query("DELETE FROM posts").execute(connection)?;
@@ -723,6 +692,8 @@ pub trait QueryDsl: Sized {
     /// assert_eq!(expected_data, names_and_titles);
     /// #     Ok(())
     /// # }
+    /// # #[cfg(not(any(feature = "postgres", feature = "sqlite")))]
+    /// # fn run_test() -> QueryResult<()> { Ok(()) }
     /// ```
     fn full_outer_join<Rhs>(self, rhs: Rhs) -> FullJoin<Self, Rhs>
     where

@@ -638,6 +638,34 @@ pub mod users {
                 )
             }
         }
+        impl<
+            Left,
+            Right,
+        > diesel::SelectableExpression<
+            diesel::internal::table_macro::Join<
+                Left,
+                Right,
+                diesel::internal::table_macro::FullOuter,
+            >,
+        > for id
+        where
+            id: diesel::AppearsOnTable<
+                diesel::internal::table_macro::Join<
+                    Left,
+                    Right,
+                    diesel::internal::table_macro::FullOuter,
+                >,
+            >,
+            Self: diesel::SelectableExpression<Left>,
+            Left: diesel::query_source::AppearsInFromClause<
+                    super::table,
+                    Count = diesel::query_source::Never,
+                > + diesel::query_source::QuerySource,
+            Right: diesel::query_source::AppearsInFromClause<
+                    super::table,
+                    Count = diesel::query_source::Never,
+                > + diesel::query_source::QuerySource,
+        {}
         #[allow(non_camel_case_types, dead_code)]
         #[derive(Debug, Clone, Copy, diesel::query_builder::QueryId, Default)]
         pub struct name;
@@ -792,6 +820,34 @@ pub mod users {
                 self.eq(__diesel_internal_rhs)
             }
         }
+        impl<
+            Left,
+            Right,
+        > diesel::SelectableExpression<
+            diesel::internal::table_macro::Join<
+                Left,
+                Right,
+                diesel::internal::table_macro::FullOuter,
+            >,
+        > for name
+        where
+            name: diesel::AppearsOnTable<
+                diesel::internal::table_macro::Join<
+                    Left,
+                    Right,
+                    diesel::internal::table_macro::FullOuter,
+                >,
+            >,
+            Self: diesel::SelectableExpression<Left>,
+            Left: diesel::query_source::AppearsInFromClause<
+                    super::table,
+                    Count = diesel::query_source::Never,
+                > + diesel::query_source::QuerySource,
+            Right: diesel::query_source::AppearsInFromClause<
+                    super::table,
+                    Count = diesel::query_source::Never,
+                > + diesel::query_source::QuerySource,
+        {}
         impl diesel::expression::IsContainedInGroupBy<id> for name {
             type Output = diesel::expression::is_contained_in_group_by::No;
         }
