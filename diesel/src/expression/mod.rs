@@ -25,7 +25,11 @@ pub mod array_comparison;
 pub(crate) mod assume_not_null;
 pub(crate) mod bound;
 mod coerce;
-/// TODO: avoid needing this public: should be possible once windowing functions are available
+/// Public so downstream crates can name the `count` aggregate type as a generic
+/// bound. Required by custom `FILTER (WHERE …)` aggregate combinators that wrap
+/// composite aggregate expressions (e.g. `count(a) + count(b)`); the native
+/// `AggregateExpressionMethods::aggregate_filter` only applies to single named
+/// functions, so it cannot replace them.
 pub mod count;
 #[cfg(not(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))]
 pub(crate) mod exists;
